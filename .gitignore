@@ -1,0 +1,6 @@
+/uploads/*
+!/uploads/.gitkeep
+!/uploads/temp/
+/uploads/temp/*
+!/uploads/temp/.gitkeep
+composer.lock
