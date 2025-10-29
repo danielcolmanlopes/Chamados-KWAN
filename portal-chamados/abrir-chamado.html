@@ -1,6 +1,107 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abrir Chamado - KWAN</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" type="image/png" href="assets/img/quadrado.png">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+<header class="topbar">
+    <div class="container flex-between">
+        <div class="logo-area">
+            <a href="index.html"><img src="assets/img/kwan_logotipo_v1.png" alt="KWAN" class="logo-lg"></a>
+            <a href="index.html"><img src="assets/img/kwan_logotipo_pq.png" alt="KWAN" class="logo-sm"></a>
+        </div>
+        <nav class="nav-links">
+            <a href="acompanhar.html" class="btn secondary">Acompanhar</a>
+            <a href="backend/login.php" class="link-admin">Área Administrativa</a>
+        </nav>
+    </div>
+</header>
+
+<main class="form-page">
+    <div class="container narrow">
+        <h1>Registrar novo chamado</h1>
+        <p>Informe os dados do cliente e produto, descreva o problema e anexe a nota fiscal de compra.</p>
+        <div id="msg"></div>
+        <form id="form-chamado" enctype="multipart/form-data">
+            <fieldset>
+                <legend>Dados do cliente</legend>
+                <div class="grid two">
+                    <label>Nome completo
+                        <input type="text" name="cliente_nome" required maxlength="150">
+                    </label>
+                    <label>E-mail
+                        <input type="email" name="cliente_email" required maxlength="180">
+                    </label>
+                    <label>Telefone
+                        <input type="tel" name="cliente_telefone" required maxlength="30">
+                    </label>
+                    <label>CNPJ/CPF
+                        <input type="text" name="cliente_cnpj" required maxlength="30">
+                    </label>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Informações do produto</legend>
+                <div class="grid two">
+                    <label>Marca
+                        <input type="text" name="produto_marca" required maxlength="120">
+                    </label>
+                    <label>Modelo
+                        <input type="text" name="produto_modelo" required maxlength="120">
+                    </label>
+                    <label>Número de série
+                        <input type="text" name="produto_serial" required maxlength="120">
+                    </label>
+                    <label>Data da compra
+                        <input type="date" name="produto_data_compra" required>
+                    </label>
+                </div>
+                <label>Descrição detalhada do problema
+                    <textarea name="descricao_problema" rows="5" required maxlength="2000"></textarea>
+                </label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Anexos</legend>
+                <label>Nota fiscal de compra (PDF ou XML, máx 20 MB)
+                    <input type="file" name="nf_compra" accept="application/pdf,application/xml,text/xml" required>
+                </label>
+                <label>Mídia adicional (fotos, vídeos ou áudios - opcional)
+                    <input type="file" name="midia[]" multiple accept="image/jpeg,image/png,application/pdf,video/mp4,audio/mpeg,audio/wav">
+                </label>
+            </fieldset>
+
+            <div class="captcha-wrapper">
+                <div class="g-recaptcha" data-sitekey="6LfplforAAAAAPYv0Y9VkaWFBzGD0NefNbJ8Y7JE"></div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn primary">Enviar chamado</button>
+                <a href="index.html" class="btn outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container flex-between">
+        <p>&copy; <span id="ano"></span> KWAN. Todos os direitos reservados.</p>
+        <p class="contact">Suporte: <a href="mailto:suporte@kwansolucoes.com.br">suporte@kwansolucoes.com.br</a></p>
+    </div>
+</footer>
+
+<script src="assets/js/form.js"></script>
+<script>
+    document.getElementById('ano').textContent = new Date().getFullYear();
+</script>
+=======
 <meta charset="UTF-8">
 <title>Abrir Chamado - KWAN</title>
 <link rel="icon" href="assets/img/quadrado.png">
@@ -42,5 +143,6 @@
 
 <footer>© 2025 KWAN Soluções em Automação — Todos os direitos reservados</footer>
 <script src="assets/js/form.js"></script>
+
 </body>
 </html>

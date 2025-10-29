@@ -2,47 +2,111 @@
 header('Content-Type: application/json');
 require __DIR__ . '/config.php';
 
-if($_SERVER['REQUEST_METHOD']==='GET'){
-  $codigo = $_GET['c'] ?? '';
-  if(!$codigo){ echo json_encode(["success"=>false,"message"=>"Código ausente."]); exit; }
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $codigo = sanitize_text($_GET['c'] ?? '');
+    if ($codigo === '') {
+        echo json_encode(['success' => false, 'message' => 'Código do chamado não informado.']);
+        exit;
+    }
 
-  $stmt = $conn->prepare("SELECT * FROM chamados WHERE codigo_publico=? LIMIT 1");
-  $stmt->bind_param("s",$codigo);
-  $stmt->execute();
-  $res = $stmt->get_result();
-  if($res->num_rows===0){ echo json_encode(["success"=>false,"message"=>"Chamado não encontrado."]); exit; }
-  $ch = $res->fetch_assoc();
+    $stmt = $mysqli->prepare("SELECT id, codigo, cliente_nome, cliente_email, cliente_telefone, cliente_cnpj, produto_marca, produto_modelo, produto_serial, produto_data_compra, nf_original, descricao_problema, status, created_at FROM chamados WHERE codigo = ?");
+    $stmt->bind_param('s', $codigo);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $chamado = $result->fetch_assoc();
+    $stmt->close();
 
-  // mensagens
-  $mens = [];
-  $stmtm = $conn->prepare("SELECT autor,mensagem FROM mensagens_chamado WHERE chamado_id=? ORDER BY id DESC");
-  $stmtm->bind_param("i",$ch['id']); $stmtm->execute();
-  $rm = $stmtm->get_result();
-  while($m=$rm->fetch_assoc()) $mens[]=$m;
+    if (!$chamado) {
+        echo json_encode(['success' => false, 'message' => 'Chamado não encontrado.']);
+        exit;
+    }
 
-  // eventos
-  $evts = [];
-  $stmte = $conn->prepare("SELECT para_status, criado_em FROM eventos_chamado WHERE chamado_id=? ORDER BY id DESC");
-  $stmte->bind_param("i",$ch['id']); $stmte->execute();
-  $re = $stmte->get_result();
-  while($e=$re->fetch_assoc()) $evts[]=["data"=>$e['criado_em'],"texto"=>$e['para_status']];
+    $mensagens = [];
+    $msgStmt = $mysqli->prepare("SELECT origem, mensagem, created_at FROM mensagens_chamado WHERE codigo = ? ORDER BY created_at ASC");
+    if ($msgStmt) {
+        $msgStmt->bind_param('s', $codigo);
+        $msgStmt->execute();
+        $mensagens = $msgStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $msgStmt->close();
+    }
 
-  echo json_encode(["success"=>true,"chamado"=>$ch,"mensagens"=>$mens,"eventos"=>$evts]);
-  exit;
+    $eventos = [];
+    $evtStmt = $mysqli->prepare("SELECT status, observacao, criado_por, created_at FROM eventos_chamado WHERE codigo = ? ORDER BY created_at ASC");
+    if ($evtStmt) {
+        $evtStmt->bind_param('s', $codigo);
+        $evtStmt->execute();
+        $eventos = $evtStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $evtStmt->close();
+    }
+
+    $anexos = [];
+    $anexoStmt = $mysqli->prepare("SELECT tipo, arquivo_nome, arquivo_caminho, created_at FROM anexos_chamado WHERE codigo = ? ORDER BY created_at ASC");
+    if ($anexoStmt) {
+        $anexoStmt->bind_param('s', $codigo);
+        $anexoStmt->execute();
+        $anexos = $anexoStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $anexoStmt->close();
+    }
+
+    echo json_encode([
+        'success' => true,
+        'chamado' => $chamado,
+        'mensagens' => $mensagens,
+        'eventos' => $eventos,
+        'anexos' => $anexos,
+    ]);
+    exit;
 }
 
-if($_SERVER['REQUEST_METHOD']==='POST'){
-  $codigo = $_POST['codigo'] ?? '';
-  $mensagem = trim($_POST['mensagem'] ?? '');
-  if(!$codigo || !$mensagem){ echo json_encode(["success"=>false,"message"=>"Dados incompletos."]); exit; }
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $codigo = sanitize_text($_POST['codigo'] ?? '');
+    $mensagem = trim($_POST['mensagem'] ?? '');
 
-  $stmt = $conn->prepare("SELECT id FROM chamados WHERE codigo_publico=? LIMIT 1");
-  $stmt->bind_param("s",$codigo); $stmt->execute();
-  $res = $stmt->get_result();
-  if($res->num_rows===0){ echo json_encode(["success"=>false,"message"=>"Chamado não encontrado."]); exit; }
-  $cid = $res->fetch_assoc()['id'];
+    if ($codigo === '' || $mensagem === '') {
+        echo json_encode(['success' => false, 'message' => 'Informe o código e a mensagem.']);
+        exit;
+    }
 
-  $stmt2 = $conn->prepare("INSERT INTO mensagens_chamado (chamado_id,autor,mensagem,visibilidade) VALUES (?, 'cliente', ?, 'publica')");
-  $stmt2->bind_param("is",$cid,$mensagem); $stmt2->execute();
-  echo json_encode(["success"=>true]); exit;
+    $stmt = $mysqli->prepare("SELECT id FROM chamados WHERE codigo = ?");
+    $stmt->bind_param('s', $codigo);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $chamado = $result->fetch_assoc();
+    $stmt->close();
+
+    if (!$chamado) {
+        echo json_encode(['success' => false, 'message' => 'Chamado não encontrado.']);
+        exit;
+    }
+
+    $mensagemLimpa = filter_var($mensagem, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
+
+    $insert = $mysqli->prepare("INSERT INTO mensagens_chamado (chamado_id, codigo, origem, mensagem) VALUES (?, ?, 'cliente', ?)");
+    if (!$insert) {
+        echo json_encode(['success' => false, 'message' => 'Erro ao preparar mensagem.']);
+        exit;
+    }
+
+    $insert->bind_param('iss', $chamado['id'], $codigo, $mensagemLimpa);
+    if (!$insert->execute()) {
+        echo json_encode(['success' => false, 'message' => 'Não foi possível registrar a mensagem.']);
+        exit;
+    }
+    $insert->close();
+
+    $evento = $mysqli->prepare("INSERT INTO eventos_chamado (chamado_id, codigo, status, observacao, criado_por) VALUES (?, ?, ?, ?, ?)");
+    if ($evento) {
+        $status = 'mensagem_cliente';
+        $observacao = 'Cliente enviou uma nova mensagem.';
+        $autor = 'Cliente';
+        $evento->bind_param('issss', $chamado['id'], $codigo, $status, $observacao, $autor);
+        $evento->execute();
+        $evento->close();
+    }
+
+    echo json_encode(['success' => true]);
+    exit;
 }
+
+http_response_code(405);
+echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
