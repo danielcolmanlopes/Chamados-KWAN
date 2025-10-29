@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Chamados KWAN</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" type="image/png" href="assets/img/quadrado.png">
+</head>
+<body>
+<header class="topbar">
+    <div class="container flex-between">
+        <div class="logo-area">
+            <img src="assets/img/kwan_logotipo_v1.png" alt="KWAN" class="logo-lg">
+            <img src="assets/img/kwan_logotipo_pq.png" alt="KWAN" class="logo-sm">
+        </div>
+        <nav class="nav-links">
+            <a href="abrir-chamado.html" class="btn primary">Abrir Chamado</a>
+            <a href="acompanhar.html" class="btn secondary">Acompanhar Chamado</a>
+            <a href="backend/login.php" class="link-admin">Área Administrativa</a>
+        </nav>
+    </div>
+</header>
+
+<main class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <h1>Portal de Chamados KWAN</h1>
+            <p>Registre e acompanhe o status dos seus chamados de forma rápida, transparente e segura.</p>
+            <div class="hero-actions">
+                <a href="abrir-chamado.html" class="btn primary large">Abrir Chamado</a>
+                <a href="acompanhar.html" class="btn outline large">Acompanhar Chamado</a>
+            </div>
+            <p class="caption">Precisa atualizar o status ou responder ao cliente? <a href="backend/login.php">Acesse a área administrativa</a>.</p>
+        </div>
+    </div>
+</main>
+
+<section class="features">
+    <div class="container grid">
+        <article class="card">
+            <h2>Atendimento Humanizado</h2>
+            <p>Nossa equipe está pronta para oferecer o melhor suporte, com foco na solução dos seus problemas.</p>
+        </article>
+        <article class="card">
+            <h2>Transparência Total</h2>
+            <p>Acompanhe cada etapa do processo: recebimento, análise técnica, reparo e devolução.</p>
+        </article>
+        <article class="card">
+            <h2>Segurança Garantida</h2>
+            <p>Seus dados e arquivos são armazenados com segurança em nossa infraestrutura.</p>
+        </article>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="container flex-between">
+        <p>&copy; <span id="ano"></span> KWAN. Todos os direitos reservados.</p>
+        <p class="contact">Suporte: <a href="mailto:suporte@kwansolucoes.com.br">suporte@kwansolucoes.com.br</a></p>
+    </div>
+</footer>
+<script>
+    document.getElementById('ano').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
