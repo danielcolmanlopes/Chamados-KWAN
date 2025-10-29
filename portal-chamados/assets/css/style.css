@@ -1,4 +1,4 @@
-:root {
+
     --kwan-red: #e61b3f;
     --kwan-dark: #1c1b1b;
     --kwan-dark-80: rgba(28, 27, 27, 0.8);
@@ -697,3 +697,4 @@ form.inline {
         font-size: 0.75rem;
     }
 }
+

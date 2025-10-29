@@ -1,24 +1,24 @@
-# Portal de Chamados KWAN
+# Portal de Chamados KWAN — Deploy Rápido
 
-Aplicação PHP + MySQL para abertura e acompanhamento de chamados técnicos.
+1) Suba a pasta **portal-chamados/** para `public_html/portal-chamados/`.
+2) No cPanel → phpMyAdmin, selecione o DB `dclinfo2_portal_chamados` e importe `backend/db.sql`.
+3) Garanta a pasta `/uploads` com permissão 755.
+4) Acesse:
+   - Abrir: `/portal-chamados/abrir-chamado.html`
+   - Acompanhar: `/portal-chamados/acompanhar.html?c=KWAN-XXXX`
+   - Painel: `/portal-chamados/backend/login.php` (daniel@kwansolucoes.com.br / kwan123)
 
-## Estrutura
-- `index.html`: landing page
-- `abrir-chamado.html`: formulário público
-- `acompanhar.html`: acompanhamento
-- `backend/`: API e painel administrativo
-- `uploads/`: armazenamento de arquivos enviados
+Config do banco em `backend/config.php`:
+- host: localhost
+- db: dclinfo2_portal_chamados
+- user: dclinfo2_portal_chamados
+- pass: 7k#;Z6wE4[n6
 
-## Requisitos
-- PHP 8.1+
-- MySQL 5.7+
+reCAPTCHA v2:
+- site key (HTML): 6LfplforAAAAAPYv0Y9VkaWFBzGD0NefNbJ8Y7JE
+- secret (backend): 6LfplforAAAAAEhRchvQUfQXu1mh45EVzjvwSHHF
 
-<!--
-Post-generation checklist
-[ ] Upload the whole portal-chamados/ folder to public_html/.
-[ ] In cPanel → phpMyAdmin, select dclinfo2_portal_chamados and import backend/db.sql.
-[ ] Ensure /uploads/ has permission 755.
-[ ] Test: https://kwansolucoes.com.br/portal-chamados/abrir-chamado.html
-[ ] Test: https://kwansolucoes.com.br/portal-chamados/backend/login.php (daniel@kwansolucoes.com.br / kwan123)
-Important: The reCAPTCHA and DB credentials are production values you provided; rotate if needed.
--->
+OBS: Coloque os arquivos de logo em `assets/img/`:
+- `kwan_logotipo_v1.png` (header grande)
+- `kwan_logotipo_pq.png` (header pequeno)
+- `quadrado.png` (favicon)
