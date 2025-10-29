@@ -11,7 +11,6 @@ document.getElementById('formChamado').addEventListener('submit', async (e) => {
       msg.innerHTML = `✅ Chamado criado!<br>Código: <b>${data.codigo}</b><br>
         Acompanhe: <a href="acompanhar.html?c=${data.codigo}">Clique aqui</a>`;
       e.target.reset();
-      if(window.grecaptcha) grecaptcha.reset();
     }else{
       msg.innerHTML = '❌ Erro: ' + (data.message || 'Falha ao criar chamado.');
     }
