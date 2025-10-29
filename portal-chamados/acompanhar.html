@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Acompanhar Chamado - KWAN</title>
+<link rel="icon" href="assets/img/quadrado.png">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header>
+  <img src="assets/img/kwan_logotipo_v1.png" alt="KWAN Soluções em Automação">
+</header>
+
+<main class="container">
+  <h1>Acompanhar Chamado</h1>
+  <div id="infoChamado"><p>Carregando informações...</p></div>
+
+  <h3>Anexar documentos complementares</h3>
+  <form id="formUpload" enctype="multipart/form-data">
+    <input type="file" name="arquivo" required>
+    <select name="tipo">
+      <option value="nf_remessa">NF de Remessa</option>
+      <option value="comprovante">Comprovante / Rastreamento</option>
+      <option value="foto">Foto</option>
+      <option value="video">Vídeo</option>
+      <option value="audio">Áudio</option>
+      <option value="outro">Outro</option>
+    </select>
+    <button type="submit">Enviar Anexo</button>
+  </form>
+
+  <div id="msg"></div>
+
+  <h3>Mensagens</h3>
+  <div id="mensagens"></div>
+
+  <form id="formMensagem">
+    <textarea name="mensagem" placeholder="Escreva uma mensagem..." required></textarea>
+    <button type="submit">Enviar Mensagem</button>
+  </form>
+</main>
+
+<footer>© 2025 KWAN Soluções em Automação — Todos os direitos reservados</footer>
+<script src="assets/js/acompanhar.js"></script>
+</body>
+</html>
