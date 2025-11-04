@@ -69,10 +69,6 @@ img {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
-.grid.three {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
 .topbar {
     background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(8px);
@@ -1076,12 +1072,6 @@ textarea {
     background: #eef3ff;
     border-color: #aabef8;
     color: #314c97;
-}
-
-.alert.warning {
-    background: #fff8e6;
-    border-color: #f2d48a;
-    color: #7a5b14;
 }
 
 .hidden {
