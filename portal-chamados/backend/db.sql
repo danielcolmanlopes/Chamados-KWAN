@@ -58,3 +58,28 @@ CREATE TABLE IF NOT EXISTS usuarios (
 INSERT INTO usuarios (nome, email, senha_hash)
 VALUES ('Administrador', 'daniel@kwansolucoes.com.br', SHA2('kwan123', 256))
 ON DUPLICATE KEY UPDATE nome = VALUES(nome);
+
+CREATE TABLE IF NOT EXISTS notas_fiscais (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    numero VARCHAR(60) NOT NULL,
+    serie VARCHAR(30) NOT NULL,
+    estado_emissor CHAR(2) NOT NULL,
+    data_emissao DATE NOT NULL,
+    transportadora VARCHAR(150) NOT NULL,
+    percentual_icms DECIMAL(7,4) NOT NULL,
+    valor_icms DECIMAL(14,2) NOT NULL,
+    percentual_ipi DECIMAL(7,4) NOT NULL,
+    valor_ipi DECIMAL(14,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS notas_fiscais_itens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nota_fiscal_id INT NOT NULL,
+    descricao VARCHAR(255) NOT NULL,
+    quantidade DECIMAL(14,3) NOT NULL,
+    valor_unitario DECIMAL(14,2) NOT NULL,
+    valor_total DECIMAL(14,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (nota_fiscal_id) REFERENCES notas_fiscais(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
