@@ -83,8 +83,6 @@
             </details>
         </section>
 
-        <h1>Registrar nota fiscal de entrada</h1>
-        <p>Cadastre as informações fiscais e detalhe todos os itens presentes na nota.</p>
         <div id="nf-msg" class="alert hidden"></div>
 
         <section class="form-quick-actions" aria-label="Ações rápidas de preenchimento">
@@ -174,41 +172,14 @@
             </fieldset>
 
             <fieldset>
-                <legend>Dados complementares</legend>
-                <div class="grid three">
-                    <label>Número do pedido
-                        <input type="text" name="numero_pedido" maxlength="60" autocomplete="off" placeholder="Informe o número do pedido, se houver.">
-                    </label>
-                    <label>Número de série
-                        <input type="text" name="numero_serie" maxlength="120" autocomplete="off" placeholder="Solicite ao emitente caso não conste na nota.">
-                    </label>
-                    <label>Código KWAN
-                        <input type="text" name="codigo_kwan" maxlength="60" autocomplete="off" placeholder="Ex.: KWAN-1234">
-                    </label>
-                </div>
-            </fieldset>
-
-            <fieldset class="participants">
-                <legend>Participantes da operação</legend>
+                <legend>Informações adicionais</legend>
                 <div class="grid two">
-                    <div class="participant-card">
-                        <h3>Emitente</h3>
-                        <label>Razão social / Nome completo
-                            <input type="text" name="emitente_nome" required maxlength="160" autocomplete="off" placeholder="Quem emitiu a nota?">
-                        </label>
-                        <label>CNPJ / CPF
-                            <input type="text" name="emitente_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
-                        </label>
-                    </div>
-                    <div class="participant-card">
-                        <h3>Destinatário</h3>
-                        <label>Razão social / Nome completo
-                            <input type="text" name="destinatario_nome" required maxlength="160" autocomplete="off" placeholder="Para quem a nota foi emitida?">
-                        </label>
-                        <label>CNPJ / CPF
-                            <input type="text" name="destinatario_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
-                        </label>
-                    </div>
+                    <label>Código KWAN
+                        <input type="text" name="codigo_kwan" maxlength="20" autocomplete="off" placeholder="KWAN-0000">
+                    </label>
+                    <label class="full-width">Observações da nota fiscal
+                        <textarea name="observacoes" rows="4" placeholder="Informações complementares ou código KWAN descrito na nota"></textarea>
+                    </label>
                 </div>
             </fieldset>
 

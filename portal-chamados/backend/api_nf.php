@@ -47,9 +47,10 @@ function parse_decimal_value($value, int $scale = 2): ?float
     return round($number, $scale);
 }
 
-function sanitize_document(?string $value): string
+function sanitize_document($value): string
 {
-    return preg_replace('/\D+/', '', (string) $value);
+    $digits = preg_replace('/\D+/', '', (string) ($value ?? ''));
+    return $digits ?? '';
 }
 
 $numero = sanitize_text($_POST['numero_nf'] ?? '');
@@ -65,12 +66,7 @@ $emitenteNome = sanitize_text($_POST['emitente_nome'] ?? '');
 $emitenteDocumento = sanitize_document($_POST['emitente_cnpj'] ?? '');
 $destinatarioNome = sanitize_text($_POST['destinatario_nome'] ?? '');
 $destinatarioDocumento = sanitize_document($_POST['destinatario_cnpj'] ?? '');
-$numeroPedido = sanitize_text($_POST['numero_pedido'] ?? '');
-$numeroSerie = strtoupper(sanitize_text($_POST['numero_serie'] ?? ''));
-$codigoKwan = strtoupper(sanitize_text($_POST['codigo_kwan'] ?? ''));
-$numeroSerie = preg_replace('/\s+/', '', $numeroSerie);
-$codigoKwan = preg_replace('/[^A-Z0-9-]/', '', $codigoKwan);
-$valorTotal = parse_decimal_value($_POST['valor_total'] ?? null, 2);
+$valorTotalInformado = parse_decimal_value($_POST['valor_total'] ?? null, 2);
 
 if ($numero === '' || $serie === '' || $estado === '' || $dataEmissao === '' || $transportadora === '') {
     respond_with_error('Preencha todos os campos obrigatórios da nota fiscal.');
@@ -87,6 +83,17 @@ $estadosValidos = [
 
 if (!in_array($estado, $estadosValidos, true)) {
     respond_with_error('Estado emissor inválido.');
+}
+
+$emitenteDocumentoValido = strlen($emitenteDocumento) === 14 || strlen($emitenteDocumento) === 11;
+$destinatarioDocumentoValido = strlen($destinatarioDocumento) === 14 || strlen($destinatarioDocumento) === 11;
+
+if ($emitenteNome === '' || !$emitenteDocumentoValido) {
+    respond_with_error('Informe os dados completos do emitente.');
+}
+
+if ($destinatarioNome === '' || !$destinatarioDocumentoValido) {
+    respond_with_error('Informe os dados completos do destinatário.');
 }
 
 if ($percentualIcms === null || $valorIcms === null || $percentualIpi === null || $valorIpi === null) {
@@ -165,30 +172,46 @@ if (empty($itensLimpos)) {
     respond_with_error('Adicione pelo menos um item válido à nota fiscal.');
 }
 
-if ($valorTotal === null) {
+$valorTotal = $valorTotalInformado;
+if ($valorTotal === null || $valorTotal <= 0) {
     $valorTotal = array_reduce(
         $itensLimpos,
-        static fn (float $carry, array $item): float => $carry + $item['valor_total'],
+        static fn ($carry, $item) => $carry + ($item['valor_total'] ?? 0),
         0.0
     );
+    $valorTotal = round($valorTotal, 2);
 }
 
-$valorTotal = round((float) $valorTotal, 2);
-
 if ($valorTotal <= 0) {
-    respond_with_error('Informe um valor total válido para a nota fiscal.');
+    respond_with_error('Valor total da nota fiscal inválido.');
+}
+
+$duplicateStmt = $mysqli->prepare(
+    'SELECT id FROM notas_fiscais WHERE numero = ? AND serie = ? AND emitente_cnpj = ? AND destinatario_cnpj = ? LIMIT 1'
+);
+if ($duplicateStmt) {
+    $duplicateStmt->bind_param('ssss', $numero, $serie, $emitenteDocumento, $destinatarioDocumento);
+    $duplicateStmt->execute();
+    $duplicateStmt->store_result();
+    if ($duplicateStmt->num_rows > 0) {
+        $duplicateStmt->close();
+        respond_with_error('Esta nota fiscal já foi registrada anteriormente.');
+    }
+    $duplicateStmt->close();
+} else {
+    respond_with_error('Não foi possível validar duplicidade da nota fiscal.', 500);
 }
 
 try {
     $mysqli->begin_transaction();
 
-    $stmt = $mysqli->prepare('INSERT INTO notas_fiscais (numero, serie, estado_emissor, data_emissao, transportadora, percentual_icms, valor_icms, percentual_ipi, valor_ipi, emitente_nome, emitente_documento, destinatario_nome, destinatario_documento, numero_pedido, numero_serie, codigo_kwan, valor_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt = $mysqli->prepare('INSERT INTO notas_fiscais (numero, serie, estado_emissor, data_emissao, transportadora, percentual_icms, valor_icms, percentual_ipi, valor_ipi, emitente_nome, emitente_cnpj, destinatario_nome, destinatario_cnpj, valor_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     if (!$stmt) {
         throw new RuntimeException('Falha ao preparar a inserção da nota fiscal.');
     }
 
     $stmt->bind_param(
-        'sssssddddsssssssd',
+        'sssssddddssssd',
         $numero,
         $serie,
         $estado,
@@ -202,9 +225,6 @@ try {
         $emitenteDocumento,
         $destinatarioNome,
         $destinatarioDocumento,
-        $numeroPedido,
-        $numeroSerie,
-        $codigoKwan,
         $valorTotal
     );
 
