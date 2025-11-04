@@ -66,6 +66,10 @@ $emitenteNome = sanitize_text($_POST['emitente_nome'] ?? '');
 $emitenteDocumento = sanitize_document($_POST['emitente_cnpj'] ?? '');
 $destinatarioNome = sanitize_text($_POST['destinatario_nome'] ?? '');
 $destinatarioDocumento = sanitize_document($_POST['destinatario_cnpj'] ?? '');
+$numeroPedido = sanitize_text($_POST['numero_pedido'] ?? '');
+$numeroSerie = sanitize_text($_POST['numero_serie'] ?? '');
+$codigoKwan = sanitize_text($_POST['codigo_kwan'] ?? '');
+$observacoes = sanitize_text($_POST['observacoes'] ?? '');
 $valorTotalInformado = parse_decimal_value($_POST['valor_total'] ?? null, 2);
 
 if ($numero === '' || $serie === '' || $estado === '' || $dataEmissao === '' || $transportadora === '') {

@@ -32,6 +32,52 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTotal = 0;
     const invoiceBatch = [];
     let invoiceCounter = 0;
+    let floatingMessageTimeout = null;
+
+    const ensureFloatingAlert = () => {
+        let element = document.getElementById('floating-alert');
+        if (!element) {
+            element = document.createElement('div');
+            element.id = 'floating-alert';
+            element.className = 'floating-alert hidden';
+            element.setAttribute('role', 'alert');
+            element.setAttribute('aria-live', 'assertive');
+            document.body.appendChild(element);
+        }
+        return element;
+    };
+
+    const hideFloatingAlert = (element) => {
+        if (!element) {
+            return;
+        }
+        element.classList.remove('visible');
+        const handleTransitionEnd = () => {
+            element.classList.add('hidden');
+            element.removeEventListener('transitionend', handleTransitionEnd);
+        };
+        element.addEventListener('transitionend', handleTransitionEnd, { once: true });
+    };
+
+    const showFloatingAlert = (message, type) => {
+        const element = ensureFloatingAlert();
+        element.className = `floating-alert alert ${type}`;
+        element.innerHTML = message;
+        element.classList.remove('hidden');
+
+        // Reinicia a animação
+        element.classList.remove('visible');
+        element.offsetHeight;
+        element.classList.add('visible');
+
+        if (floatingMessageTimeout) {
+            window.clearTimeout(floatingMessageTimeout);
+        }
+
+        floatingMessageTimeout = window.setTimeout(() => {
+            hideFloatingAlert(element);
+        }, 6000);
+    };
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     const supportedImageTypes = ['image/png', 'image/jpeg'];
@@ -41,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         msgBox.innerHTML = message;
         msgBox.classList.remove('hidden');
         msgBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showFloatingAlert(message, type);
     };
 
     const setStatus = (message, state = 'idle') => {
