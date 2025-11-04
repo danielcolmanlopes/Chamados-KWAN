@@ -602,6 +602,7 @@ img {
 }
 
 .ocr-dropzone:hover,
+.ocr-dropzone:focus,
 .ocr-dropzone.dragover {
     border-color: var(--kwan-red);
     box-shadow: 0 18px 38px rgba(230, 27, 63, 0.16);
