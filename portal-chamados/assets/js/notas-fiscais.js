@@ -217,6 +217,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return `KWAN-${digits}`;
     };
 
+    const normalizeOrderValue = (value) => {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        const trimmed = String(value).trim();
+        if (!trimmed) {
+            return '';
+        }
+        const normalized = trimmed
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toUpperCase();
+        const sanitized = normalized.replace(/[^A-Z0-9/_-]+/g, '');
+        return sanitized;
+    };
+
     const normalizeKwanCodeValue = (value) => {
         if (value === null || value === undefined) {
             return '';
