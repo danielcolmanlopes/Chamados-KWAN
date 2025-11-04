@@ -142,6 +142,7 @@ foreach ($itens as $item) {
     $descricao = sanitize_text($item['descricao'] ?? '');
     $quantidade = parse_decimal_value($item['quantidade'] ?? null, 3);
     $valorUnitario = parse_decimal_value($item['valor_unitario'] ?? null, 2);
+    $pedido = sanitize_text($item['pedido'] ?? '');
 
     if ($descricao === '' || $quantidade === null || $valorUnitario === null) {
         respond_with_error('Preencha todos os campos de cada item.');
@@ -151,13 +152,15 @@ foreach ($itens as $item) {
         respond_with_error('Informe quantidade e valor unitário válidos para os itens.');
     }
 
-    $valorTotal = round($quantidade * $valorUnitario, 2);
+    $valorTotalCalculado = round($quantidade * $valorUnitario, 2);
+    $pedidoNormalizado = $pedido !== '' ? $pedido : null;
 
     $itensLimpos[] = [
         'descricao' => $descricao,
         'quantidade' => $quantidade,
         'valor_unitario' => $valorUnitario,
-        'valor_total' => $valorTotal,
+        'valor_total' => $valorTotalCalculado,
+        'pedido' => $pedidoNormalizado,
     ];
 }
 
@@ -215,7 +218,7 @@ try {
     $notaId = $stmt->insert_id;
     $stmt->close();
 
-    $itemStmt = $mysqli->prepare('INSERT INTO notas_fiscais_itens (nota_fiscal_id, descricao, quantidade, valor_unitario, valor_total) VALUES (?, ?, ?, ?, ?)');
+    $itemStmt = $mysqli->prepare('INSERT INTO notas_fiscais_itens (nota_fiscal_id, descricao, quantidade, valor_unitario, valor_total, pedido) VALUES (?, ?, ?, ?, ?, ?)');
     if (!$itemStmt) {
         throw new RuntimeException('Falha ao preparar a inserção dos itens.');
     }
@@ -225,14 +228,16 @@ try {
     $quantidadeItem = 0.0;
     $valorUnitarioItem = 0.0;
     $valorTotalItem = 0.0;
+    $pedidoItem = null;
 
-    $itemStmt->bind_param('isddd', $notaIdParam, $descricaoItem, $quantidadeItem, $valorUnitarioItem, $valorTotalItem);
+    $itemStmt->bind_param('isddds', $notaIdParam, $descricaoItem, $quantidadeItem, $valorUnitarioItem, $valorTotalItem, $pedidoItem);
 
     foreach ($itensLimpos as $itemLimpo) {
         $descricaoItem = $itemLimpo['descricao'];
         $quantidadeItem = $itemLimpo['quantidade'];
         $valorUnitarioItem = $itemLimpo['valor_unitario'];
         $valorTotalItem = $itemLimpo['valor_total'];
+        $pedidoItem = $itemLimpo['pedido'];
 
         if (!$itemStmt->execute()) {
             throw new RuntimeException('Não foi possível salvar os itens da nota fiscal.');
