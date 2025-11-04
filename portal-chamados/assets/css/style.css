@@ -69,6 +69,10 @@ img {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.grid.three {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
 .topbar {
     background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(8px);
@@ -497,6 +501,84 @@ form legend {
     border-radius: var(--radius-small);
 }
 
+.form-quick-actions {
+    margin: 2.5rem 0 2rem;
+    padding: 1.8rem 2rem;
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: var(--radius-large);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.4rem;
+    flex-wrap: wrap;
+    border: 1px solid rgba(230, 27, 63, 0.08);
+    box-shadow: var(--kwan-shadow);
+}
+
+.form-quick-actions h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1.35rem;
+    color: var(--kwan-charcoal);
+}
+
+.form-quick-actions .caption {
+    margin: 0;
+    max-width: 520px;
+}
+
+.form-quick-actions .quick-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.form-quick-actions .quick-buttons .btn {
+    min-width: 190px;
+}
+
+.participants {
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(28, 27, 27, 0.08);
+    box-shadow: var(--kwan-shadow);
+}
+
+.participants .grid {
+    gap: 1.4rem;
+}
+
+.participant-card {
+    background: linear-gradient(135deg, rgba(230, 27, 63, 0.08), rgba(64, 123, 255, 0.08));
+    border-radius: var(--radius-medium);
+    padding: 1.2rem 1.4rem;
+    display: grid;
+    gap: 1rem;
+    border: 1px solid rgba(230, 27, 63, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.participant-card h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--kwan-charcoal);
+}
+
+.participant-card label {
+    gap: 0.35rem;
+    color: rgba(28, 27, 27, 0.78);
+    font-weight: 600;
+}
+
+.participant-card input {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(28, 27, 27, 0.12);
+}
+
+.participant-card input:focus {
+    border-color: var(--kwan-red);
+    box-shadow: 0 0 0 3px rgba(230, 27, 63, 0.14);
+    outline: none;
+}
+
 label {
     display: flex;
     flex-direction: column;
@@ -580,6 +662,29 @@ textarea {
     align-self: flex-end;
 }
 
+.nf-total-bar {
+    margin-top: 1.6rem;
+    padding: 1.2rem 1.4rem;
+    border-radius: var(--radius-medium);
+    background: linear-gradient(120deg, rgba(230, 27, 63, 0.08), rgba(28, 27, 27, 0.05));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-weight: 600;
+    color: var(--kwan-charcoal);
+}
+
+.nf-total-bar span {
+    font-size: 0.95rem;
+}
+
+.nf-total-bar strong {
+    font-size: 1.4rem;
+    color: var(--kwan-red);
+    letter-spacing: 0.02em;
+}
+
 .grid.two.compact {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 0.8rem;
@@ -605,6 +710,119 @@ textarea {
     opacity: 0.55;
     cursor: not-allowed;
     color: rgba(28, 27, 27, 0.45);
+}
+
+.batch-panel {
+    margin-top: 3.5rem;
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: var(--radius-large);
+    padding: 2rem;
+    box-shadow: var(--kwan-shadow);
+    border: 1px solid rgba(28, 27, 27, 0.08);
+}
+
+.batch-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.6rem;
+}
+
+.batch-header h2 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--kwan-charcoal);
+}
+
+.batch-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(230, 27, 63, 0.14);
+    color: var(--kwan-red);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.batch-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+.batch-table th,
+.batch-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(28, 27, 27, 0.08);
+}
+
+.batch-table th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(28, 27, 27, 0.6);
+}
+
+.batch-table tbody tr:hover {
+    background: rgba(230, 27, 63, 0.04);
+}
+
+.batch-nf,
+.batch-entity {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.batch-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    color: rgba(28, 27, 27, 0.75);
+}
+
+.batch-extra strong {
+    font-weight: 600;
+}
+
+.batch-extra span {
+    color: rgba(28, 27, 27, 0.6);
+}
+
+.batch-entity .muted,
+.batch-nf .muted {
+    color: rgba(28, 27, 27, 0.6);
+    font-size: 0.9rem;
+}
+
+.batch-value {
+    font-weight: 700;
+    color: var(--kwan-red);
+    font-size: 1.1rem;
+}
+
+.batch-table td:last-child {
+    width: 120px;
+}
+
+.batch-table .btn-text {
+    padding: 0.35rem 0;
+}
+
+.batch-table .btn-text:hover {
+    color: #b9102c;
 }
 
 #msg,
@@ -636,6 +854,12 @@ textarea {
     background: #eef3ff;
     border-color: #aabef8;
     color: #314c97;
+}
+
+.alert.warning {
+    background: #fff8e6;
+    border-color: #f2d48a;
+    color: #7a5b14;
 }
 
 .hidden {
@@ -892,6 +1116,33 @@ form.inline {
         grid-template-columns: 1fr;
     }
 
+    .form-quick-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .form-quick-actions .quick-buttons {
+        width: 100%;
+    }
+
+    .form-quick-actions .quick-buttons .btn {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    .participants .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .batch-panel {
+        padding: 1.8rem;
+    }
+
+    .batch-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
     .logo-lg {
         display: none;
     }
@@ -933,6 +1184,30 @@ form.inline {
 
     .ocr-dropzone {
         padding: 1.8rem 1.2rem;
+    }
+
+    .form-quick-actions {
+        padding: 1.4rem;
+    }
+
+    .batch-panel {
+        padding: 1.5rem;
+    }
+
+    .batch-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.6rem;
+    }
+
+    .batch-actions .btn,
+    .form-quick-actions .quick-buttons .btn {
+        width: 100%;
+    }
+
+    .batch-table th,
+    .batch-table td {
+        padding: 0.75rem;
     }
 
     .hero {
