@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalInput = document.getElementById('valor_total');
     const batchButton = document.getElementById('btn-add-to-batch');
     const exportButton = document.getElementById('btn-export-xml');
-    const exportExcelButton = document.getElementById('btn-export-excel');
     const batchListBody = document.getElementById('batch-list-body');
     const batchEmptyState = document.getElementById('batch-empty-state');
     const batchCounter = document.getElementById('batch-counter');
@@ -201,49 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return String(value).replace(/\D/g, '');
     };
 
-    const ensureString = (value) => (value === null || value === undefined ? '' : String(value));
-
-    const stripDiacritics = (value) => {
-        if (typeof value !== 'string') {
-            return value;
-        }
-        return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    };
-
-    const normalizeOrderValue = (value) => stripDiacritics(ensureString(value)).trim();
-
-    const normalizeSerialValue = (value) => {
-        const text = stripDiacritics(ensureString(value)).trim();
-        if (!text) {
-            return '';
-        }
-        if (/sem\s+n[úu]mero/i.test(text) || /^s\/?n$/i.test(text)) {
-            return '';
-        }
-        const sanitized = text.replace(/[^A-Za-z0-9-]/g, '').toUpperCase();
-        if (!sanitized || sanitized === 'SN' || sanitized === 'SEMNUMERO') {
-            return '';
-        }
-        return sanitized;
-    };
-
-    const normalizeKwanValue = (value) => {
-        let text = stripDiacritics(ensureString(value)).trim().toUpperCase();
-        text = text.replace(/[^A-Z0-9-]/g, '');
-        if (!text || text === 'KWAN') {
-            return '';
-        }
-        if (!text.startsWith('KWAN')) {
-            text = `KWAN-${text}`;
-        } else if (!text.startsWith('KWAN-')) {
-            text = text.replace(/^KWAN/, 'KWAN-');
-        }
-        if (text === 'KWAN-') {
-            return '';
-        }
-        return text;
-    };
-
     const calculateItemsTotal = (items) => {
         if (!Array.isArray(items) || !items.length) {
             return null;
@@ -358,20 +314,15 @@ document.addEventListener('DOMContentLoaded', () => {
         batchButton.disabled = !(hasRequiredFields && allItemsValid);
     };
 
-    const gatherFormData = ({ silent = false } = {}) => {
+    const gatherFormData = () => {
         const formData = new FormData(form);
         const getValue = (name) => (formData.get(name) ?? '').toString().trim();
-        const respondWithError = (message) => {
-            if (!silent) {
-                showMessage(message, 'error');
-            }
-            return { success: false, error: message };
-        };
 
         const requiredFields = ['numero_nf', 'emitente_nome', 'emitente_cnpj', 'destinatario_nome', 'destinatario_cnpj'];
         const missingField = requiredFields.find((field) => !getValue(field));
         if (missingField) {
-            return respondWithError('Preencha os campos obrigatórios antes de adicionar ao lote.');
+            showMessage('Preencha os campos obrigatórios antes de adicionar ao lote.', 'error');
+            return null;
         }
 
         const itens = [];
@@ -398,18 +349,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (!itens.length) {
-            return respondWithError('Adicione ao menos um item válido à nota fiscal.');
+            showMessage('Adicione ao menos um item válido à nota fiscal.', 'error');
+            return null;
         }
 
         const total = calculateTotal(formData.get('valor_total'));
 
         const emitenteDocumento = normalizeDocument(getValue('emitente_cnpj'));
         const destinatarioDocumento = normalizeDocument(getValue('destinatario_cnpj'));
-        const numeroPedido = normalizeOrderValue(getValue('numero_pedido'));
-        const numeroSerie = normalizeSerialValue(getValue('numero_serie'));
-        const codigoKwan = normalizeKwanValue(getValue('codigo_kwan'));
 
-        const invoice = {
+        return {
             numero_nf: getValue('numero_nf'),
             serie: getValue('serie'),
             data_emissao: getValue('data_emissao'),
@@ -425,48 +374,8 @@ document.addEventListener('DOMContentLoaded', () => {
             destinatario_nome: getValue('destinatario_nome'),
             destinatario_cnpj: destinatarioDocumento,
             destinatario_cnpj_display: toDisplayDocument(destinatarioDocumento) || getValue('destinatario_cnpj'),
-            numero_pedido: numeroPedido,
-            numero_serie: numeroSerie,
-            codigo_kwan: codigoKwan,
             valor_total: Number.isFinite(total) ? Number(total.toFixed(2)) : 0,
             itens,
-        };
-
-        return { success: true, invoice };
-    };
-
-    const tryAddInvoiceToBatch = (invoice, { auto = false } = {}) => {
-        if (!invoice) {
-            return { success: false, message: null, type: 'error' };
-        }
-
-        const exists = invoiceBatch.some(
-            (entry) =>
-                entry.numero_nf === invoice.numero_nf &&
-                entry.emitente_cnpj === invoice.emitente_cnpj &&
-                entry.destinatario_cnpj === invoice.destinatario_cnpj
-        );
-
-        if (exists) {
-            return {
-                success: false,
-                message: 'Esta nota fiscal já foi adicionada ao lote. Remova-a antes de incluir novamente.',
-                type: 'error',
-            };
-        }
-
-        invoiceCounter += 1;
-        const uniqueId = `nf-${String(invoiceCounter).padStart(3, '0')}-${Date.now()}`;
-        invoiceBatch.push({ ...invoice, id: uniqueId });
-        renderBatchTable();
-        checkBatchButton();
-
-        return {
-            success: true,
-            message: auto
-                ? 'Nota fiscal adicionada automaticamente ao lote.'
-                : 'Nota fiscal adicionada ao lote. Você pode incluir outras antes de exportar.',
-            type: auto ? 'info' : 'success',
         };
     };
 
@@ -519,35 +428,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
 
-                const extrasCell = document.createElement('td');
-                const extraSegments = [];
-                const hasPedido = Boolean(invoice.numero_pedido);
-                const hasSerie = Boolean(invoice.numero_serie);
-                const hasKwan = Boolean(invoice.codigo_kwan);
-
-                if (hasPedido) {
-                    extraSegments.push(`<strong>Pedido ${escapeXml(invoice.numero_pedido)}</strong>`);
-                }
-                if (hasSerie) {
-                    extraSegments.push(`<span>Nº de série ${escapeXml(invoice.numero_serie)}</span>`);
-                }
-                if (hasKwan) {
-                    extraSegments.push(`<span>KWAN ${escapeXml(invoice.codigo_kwan)}</span>`);
-                }
-
-                if (!hasPedido && !hasSerie && !hasKwan) {
-                    extraSegments.push('<span class="muted">Nenhum dado complementar informado</span>');
-                    extraSegments.push('<span class="muted">Solicitar número de série ao emitente</span>');
-                } else if (!hasSerie) {
-                    extraSegments.push('<span class="muted">Solicitar número de série ao emitente</span>');
-                }
-
-                extrasCell.innerHTML = `
-                    <div class="batch-extra">
-                        ${extraSegments.join('')}
-                    </div>
-                `;
-
                 const valorCell = document.createElement('td');
                 valorCell.className = 'batch-value';
                 valorCell.textContent = toDisplayCurrency(invoice.valor_total) || 'R$ 0,00';
@@ -560,26 +440,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 removeButton.textContent = 'Remover';
                 actionsCell.append(removeButton);
 
-                row.append(nfCell, emitenteCell, destinatarioCell, extrasCell, valorCell, actionsCell);
+                row.append(nfCell, emitenteCell, destinatarioCell, valorCell, actionsCell);
                 batchListBody.append(row);
             });
         }
 
         if (batchCounter) {
             const count = invoiceBatch.length;
-            const totalValue = invoiceBatch.reduce((accumulator, invoice) => {
-                const value = Number.isFinite(invoice.valor_total) ? invoice.valor_total : 0;
-                return accumulator + value;
-            }, 0);
-            const countLabel = count === 1 ? '1 nota' : `${count} notas`;
-            batchCounter.textContent = totalValue > 0 ? `${countLabel} • ${toDisplayCurrency(totalValue)}` : countLabel;
+            batchCounter.textContent = count === 1 ? '1 nota' : `${count} notas`;
         }
 
         if (exportButton) {
             exportButton.disabled = invoiceBatch.length === 0;
-        }
-        if (exportExcelButton) {
-            exportExcelButton.disabled = invoiceBatch.length === 0;
         }
     };
 
@@ -606,15 +478,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (invoice.transportadora) {
                 xmlLines.push(`      <transportadora>${escapeXml(invoice.transportadora)}</transportadora>`);
-            }
-            if (invoice.numero_pedido) {
-                xmlLines.push(`      <pedido>${escapeXml(invoice.numero_pedido)}</pedido>`);
-            }
-            if (invoice.numero_serie) {
-                xmlLines.push(`      <numeroSerie>${escapeXml(invoice.numero_serie)}</numeroSerie>`);
-            }
-            if (invoice.codigo_kwan) {
-                xmlLines.push(`      <codigoKwan>${escapeXml(invoice.codigo_kwan)}</codigoKwan>`);
             }
             xmlLines.push('    </identificacao>');
 
@@ -679,125 +542,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showMessage('Lote exportado com sucesso em XML.', 'success');
     };
 
-    const exportBatchToExcel = () => {
-        if (!invoiceBatch.length) {
-            showMessage('Adicione ao menos uma nota ao lote antes de exportar.', 'error');
-            return;
-        }
-
-        const headers = [
-            'Número NF',
-            'Série',
-            'Data emissão',
-            'Estado emissor',
-            'Pedido',
-            'Número de série',
-            'Código KWAN',
-            'Emitente',
-            'Documento emitente',
-            'Destinatário',
-            'Documento destinatário',
-            'Transportadora',
-            'Valor total (R$)',
-        ];
-
-        const summaryRows = invoiceBatch.map((invoice) => [
-            invoice.numero_nf || '',
-            invoice.serie || '',
-            invoice.data_emissao ? formatDateDisplay(invoice.data_emissao) : '',
-            invoice.estado_emissor || '',
-            invoice.numero_pedido || '',
-            invoice.numero_serie || '',
-            invoice.codigo_kwan || '',
-            invoice.emitente_nome || '',
-            invoice.emitente_cnpj_display || invoice.emitente_cnpj || '',
-            invoice.destinatario_nome || '',
-            invoice.destinatario_cnpj_display || invoice.destinatario_cnpj || '',
-            invoice.transportadora || '',
-            Number.isFinite(invoice.valor_total) ? invoice.valor_total.toFixed(2) : '',
-        ]);
-
-        const summaryTable = `
-            <table border="1">
-                <thead>
-                    <tr>${headers.map((header) => `<th>${escapeXml(header)}</th>`).join('')}</tr>
-                </thead>
-                <tbody>
-                    ${summaryRows
-                        .map((row) => `<tr>${row.map((cell) => `<td>${escapeXml(cell ?? '')}</td>`).join('')}</tr>`)
-                        .join('')}
-                </tbody>
-            </table>
-        `;
-
-        const itemsHeaders = [
-            'Número NF',
-            'Item',
-            'Descrição',
-            'Quantidade',
-            'Valor unitário (R$)',
-            'Valor total (R$)',
-            'Pedido',
-            'Número de série',
-            'Código KWAN',
-        ];
-
-        const itemRows = invoiceBatch
-            .map((invoice) =>
-                invoice.itens.map((item, index) => {
-                    const quantidade = Number.isFinite(item.quantidade) ? item.quantidade : parseDecimal(item.quantidade);
-                    const valorUnitario = Number.isFinite(item.valor_unitario)
-                        ? item.valor_unitario
-                        : parseDecimal(item.valor_unitario);
-                    const totalLinha =
-                        (quantidade !== null && valorUnitario !== null && Number.isFinite(quantidade) && Number.isFinite(valorUnitario))
-                            ? (quantidade * valorUnitario).toFixed(2)
-                            : '';
-
-                    return [
-                        invoice.numero_nf || '',
-                        `${index + 1}`,
-                        item.descricao || '',
-                        quantidade !== null && Number.isFinite(quantidade) ? quantidade.toString() : '',
-                        valorUnitario !== null && Number.isFinite(valorUnitario) ? valorUnitario.toFixed(2) : '',
-                        totalLinha,
-                        invoice.numero_pedido || '',
-                        invoice.numero_serie || '',
-                        invoice.codigo_kwan || '',
-                    ];
-                })
-            )
-            .flat();
-
-        const itemsTable = `
-            <table border="1">
-                <thead>
-                    <tr>${itemsHeaders.map((header) => `<th>${escapeXml(header)}</th>`).join('')}</tr>
-                </thead>
-                <tbody>
-                    ${itemRows
-                        .map((row) => `<tr>${row.map((cell) => `<td>${escapeXml(cell ?? '')}</td>`).join('')}</tr>`)
-                        .join('')}
-                </tbody>
-            </table>
-        `;
-
-        const workbookHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${summaryTable}<br><br>${itemsTable}</body></html>`;
-
-        const blob = new Blob([workbookHtml], { type: 'application/vnd.ms-excel' });
-        const url = URL.createObjectURL(blob);
-        const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `notas-fiscais-lote-${timestamp}.xls`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        showMessage('Lote exportado com sucesso em Excel.', 'success');
-    };
-
     const normalizeExtractedData = (data) => {
         const fields = {
             numero_nf: (data?.numero_nf ?? '').toString().trim(),
@@ -814,13 +558,6 @@ document.addEventListener('DOMContentLoaded', () => {
             destinatario_nome: (data?.destinatario_nome ?? data?.destinatarioNome ?? data?.destinatario ?? '').toString().trim(),
             destinatario_cnpj: (data?.destinatario_cnpj ?? data?.destinatarioCnpj ?? data?.cnpj_destinatario ?? '').toString().trim(),
             valor_total: formatDecimal(data?.valor_total ?? data?.valorTotal ?? data?.total ?? '', 2),
-            numero_pedido: normalizeOrderValue(
-                data?.numero_pedido ?? data?.pedido ?? data?.order ?? data?.numeroPedido ?? ''
-            ),
-            numero_serie: normalizeSerialValue(
-                data?.numero_serie ?? data?.serial ?? data?.numeroSerie ?? data?.serial_number ?? data?.serieNumero ?? ''
-            ),
-            codigo_kwan: normalizeKwanValue(data?.codigo_kwan ?? data?.codigoKwan ?? data?.kwan ?? ''),
             itens: Array.isArray(data?.itens)
                 ? data.itens.map((item) => ({
                       descricao: (item?.descricao ?? '').toString().trim(),
@@ -854,9 +591,6 @@ document.addEventListener('DOMContentLoaded', () => {
             destinatario_nome: fields.destinatario_nome,
             destinatario_cnpj: toDisplayDocument(fields.destinatario_cnpj),
             valor_total: fields.valor_total !== null ? toDisplayCurrency(fields.valor_total) : '',
-            numero_pedido: fields.numero_pedido,
-            numero_serie: fields.numero_serie,
-            codigo_kwan: fields.codigo_kwan,
         };
 
         const itemsDisplay = fields.itens.map((item) => ({
@@ -998,41 +732,6 @@ document.addEventListener('DOMContentLoaded', () => {
             data.valor_total = totalMatch[1];
         }
 
-        const pedidoRegex = /pedido(?:\s*(?:n[oº.]|numero))?[:#-]?\s*([A-Z0-9-]+)/i;
-        const pedidoLine = lines.find((line) => pedidoRegex.test(line));
-        if (pedidoLine) {
-            const pedidoMatch = pedidoLine.match(pedidoRegex);
-            if (pedidoMatch) {
-                data.numero_pedido = pedidoMatch[1];
-            }
-        } else {
-            const poMatch = joined.match(/PO[:#\s-]*([A-Z0-9-]+)/i);
-            if (poMatch) {
-                data.numero_pedido = poMatch[1];
-            }
-        }
-
-        const serialRegex = /(?:n[úu]mero\s*de\s*s[ée]rie|serial(?:\s*number)?|s\/?n)[:#\s-]*([A-Z0-9-]+)/i;
-        const serialLine = lines.find((line) => serialRegex.test(line));
-        if (serialLine && !/sem\s+n[úu]mero/i.test(serialLine)) {
-            const serialMatch = serialLine.match(serialRegex);
-            if (serialMatch && !/^(?:s\/?n|sn)$/i.test(serialMatch[1])) {
-                data.numero_serie = serialMatch[1];
-            }
-        }
-
-        if (!data.numero_serie) {
-            const serialJoinedMatch = joined.match(serialRegex);
-            if (serialJoinedMatch && !/^(?:s\/?n|sn)$/i.test(serialJoinedMatch[1])) {
-                data.numero_serie = serialJoinedMatch[1];
-            }
-        }
-
-        const kwanMatch = joined.match(/KWAN[-\s:]*([A-Z0-9]+)/i);
-        if (kwanMatch) {
-            data.codigo_kwan = kwanMatch[1];
-        }
-
         const itemRegex = /^(\d{1,3})\s+(.+?)\s+(\d+(?:[.,]\d{1,3}))\s+(?:UN|UND|UNID|PC|KG|LT|CX|DZ|SC|M|MT|PCT|ROL)?\s+(\d+(?:[.,]\d{1,4}))/i;
         lines.forEach((line) => {
             const match = line.match(itemRegex);
@@ -1152,34 +851,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (badgesList) {
             badgesList.innerHTML = '';
-            const entries = [];
-            const pushEntry = (label, value) => {
-                if (value) {
-                    entries.push({ label, value });
-                }
-            };
-
-            pushEntry('Número da NF', display.numero_nf);
-            pushEntry('Série', display.serie);
-            pushEntry('Data de emissão', display.data_emissao);
-            pushEntry('Estado emissor', display.estado_emissor);
-            pushEntry('Transportadora', display.transportadora);
-            pushEntry('Percentual ICMS', display.percentual_icms);
-            pushEntry('Valor ICMS', display.valor_icms);
-            pushEntry('Percentual IPI', display.percentual_ipi);
-            pushEntry('Valor IPI', display.valor_ipi);
-            pushEntry('Emitente', display.emitente_nome);
-            pushEntry('CNPJ do emitente', display.emitente_cnpj);
-            pushEntry('Destinatário', display.destinatario_nome);
-            pushEntry('CNPJ do destinatário', display.destinatario_cnpj);
-            pushEntry('Número do pedido', display.numero_pedido);
-            if (display.numero_serie) {
-                pushEntry('Número de série', display.numero_serie);
-            } else if (needsSerial) {
-                entries.push({ label: 'Número de série', value: 'Solicitar ao emitente' });
-            }
-            pushEntry('Código KWAN', display.codigo_kwan);
-            pushEntry('Valor total', display.valor_total);
+            const entries = [
+                { label: 'Número da NF', value: display.numero_nf },
+                { label: 'Série', value: display.serie },
+                { label: 'Data de emissão', value: display.data_emissao },
+                { label: 'Estado emissor', value: display.estado_emissor },
+                { label: 'Transportadora', value: display.transportadora },
+                { label: 'Percentual ICMS', value: display.percentual_icms },
+                { label: 'Valor ICMS', value: display.valor_icms },
+                { label: 'Percentual IPI', value: display.percentual_ipi },
+                { label: 'Valor IPI', value: display.valor_ipi },
+                { label: 'Emitente', value: display.emitente_nome },
+                { label: 'CNPJ do emitente', value: display.emitente_cnpj },
+                { label: 'Destinatário', value: display.destinatario_nome },
+                { label: 'CNPJ do destinatário', value: display.destinatario_cnpj },
+                { label: 'Valor total', value: display.valor_total },
+            ].filter((entry) => entry.value);
 
             if (!entries.length) {
                 const dt = document.createElement('dt');
@@ -1409,9 +1096,6 @@ document.addEventListener('DOMContentLoaded', () => {
         assignValue('destinatario_nome', extractedData.destinatario_nome ?? '');
         assignValue('destinatario_cnpj', extractedData.destinatario_cnpj ?? '');
         assignValue('valor_total', extractedData.valor_total ?? '');
-        assignValue('numero_pedido', extractedData.numero_pedido ?? '');
-        assignValue('numero_serie', extractedData.numero_serie ?? '');
-        assignValue('codigo_kwan', extractedData.codigo_kwan ?? '');
 
         const estadoSelect = form.elements.namedItem('estado_emissor');
         if (estadoSelect instanceof HTMLSelectElement && extractedData.estado_emissor) {
@@ -1433,38 +1117,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         calculateTotal(extractedData.valor_total ?? null);
         checkBatchButton();
-
-        const serialField = form.elements.namedItem('numero_serie');
-        const serialValue = serialField instanceof HTMLInputElement ? serialField.value.trim() : '';
-        const gatherResult = gatherFormData({ silent: true });
-
-        const messageParts = ['Campos preenchidos com os dados importados. Revise antes de salvar.'];
-        let messageType = 'success';
-
-        if (!serialValue) {
-            messageParts.push('Número de série não identificado. Solicite ao emitente.');
-            messageType = 'warning';
-        }
-
-        if (gatherResult.success) {
-            const batchOutcome = tryAddInvoiceToBatch(gatherResult.invoice, { auto: true });
-            if (batchOutcome.success) {
-                messageParts.push('Nota fiscal adicionada automaticamente ao lote.');
-                if (!serialValue) {
-                    messageType = 'warning';
-                }
-            } else if (batchOutcome.message) {
-                messageParts.push(batchOutcome.message);
-                if (batchOutcome.type) {
-                    messageType = batchOutcome.type;
-                }
-            }
-        } else if (gatherResult.error) {
-            messageParts.push(gatherResult.error);
-            messageType = 'error';
-        }
-
-        showMessage(messageParts.join(' '), messageType);
+        showMessage('Campos preenchidos com os dados importados. Revise antes de salvar.', 'success');
     };
 
     addButton.addEventListener('click', () => {
@@ -1546,14 +1199,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (batchButton) {
         batchButton.addEventListener('click', () => {
-            const result = gatherFormData();
-            if (!result.success) {
+            const invoice = gatherFormData();
+            if (!invoice) {
                 return;
             }
-            const outcome = tryAddInvoiceToBatch(result.invoice, { auto: false });
-            if (outcome.message) {
-                showMessage(outcome.message, outcome.type);
+            const exists = invoiceBatch.some(
+                (entry) =>
+                    entry.numero_nf === invoice.numero_nf && entry.emitente_cnpj === invoice.emitente_cnpj && entry.destinatario_cnpj === invoice.destinatario_cnpj
+            );
+            if (exists) {
+                showMessage('Esta nota fiscal já foi adicionada ao lote. Remova-a antes de incluir novamente.', 'error');
+                return;
             }
+
+            invoiceCounter += 1;
+            const uniqueId = `nf-${String(invoiceCounter).padStart(3, '0')}-${Date.now()}`;
+            invoiceBatch.push({ ...invoice, id: uniqueId });
+            renderBatchTable();
+            checkBatchButton();
+            showMessage('Nota fiscal adicionada ao lote. Você pode incluir outras antes de exportar.', 'success');
         });
     }
 
@@ -1582,12 +1246,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (exportButton) {
         exportButton.addEventListener('click', () => {
             exportBatchToXml();
-        });
-    }
-
-    if (exportExcelButton) {
-        exportExcelButton.addEventListener('click', () => {
-            exportBatchToExcel();
         });
     }
 

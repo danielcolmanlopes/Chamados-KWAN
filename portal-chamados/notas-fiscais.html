@@ -148,6 +148,30 @@
                 </div>
             </fieldset>
 
+            <fieldset class="participants">
+                <legend>Participantes da operação</legend>
+                <div class="grid two">
+                    <div class="participant-card">
+                        <h3>Emitente</h3>
+                        <label>Razão social / Nome completo
+                            <input type="text" name="emitente_nome" required maxlength="160" autocomplete="off" placeholder="Quem emitiu a nota?">
+                        </label>
+                        <label>CNPJ / CPF
+                            <input type="text" name="emitente_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
+                        </label>
+                    </div>
+                    <div class="participant-card">
+                        <h3>Destinatário</h3>
+                        <label>Razão social / Nome completo
+                            <input type="text" name="destinatario_nome" required maxlength="160" autocomplete="off" placeholder="Para quem a nota foi emitida?">
+                        </label>
+                        <label>CNPJ / CPF
+                            <input type="text" name="destinatario_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+
             <fieldset>
                 <legend>Dados complementares</legend>
                 <div class="grid three">
@@ -231,7 +255,6 @@
                 </div>
                 <div class="batch-actions">
                     <span id="batch-counter" class="badge">0 notas</span>
-                    <button type="button" id="btn-export-excel" class="btn outline" disabled>Exportar lote em Excel</button>
                     <button type="button" id="btn-export-xml" class="btn primary" disabled>Exportar lote em XML</button>
                 </div>
             </div>
@@ -242,14 +265,13 @@
                             <th>NF</th>
                             <th>Emitente</th>
                             <th>Destinatário</th>
-                            <th>Pedido / Série / KWAN</th>
                             <th>Valor total</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="batch-list-body">
                         <tr id="batch-empty-state">
-                            <td colspan="6" class="muted">Nenhuma nota foi adicionada ao lote ainda.</td>
+                            <td colspan="5" class="muted">Nenhuma nota foi adicionada ao lote ainda.</td>
                         </tr>
                     </tbody>
                 </table>
