@@ -5,7 +5,19 @@
 <title>Abrir Chamado - KWAN</title>
 <link rel="icon" href="assets/img/quadrado.png">
 <link rel="stylesheet" href="assets/css/style.css">
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script src="assets/js/config.js"></script>
+<script>
+  window.initRecaptcha = function(){
+    var container = document.getElementById('recaptcha');
+    if(!container){ return; }
+    if(!window.portalConfig || !portalConfig.recaptchaSiteKey){
+      container.innerHTML = '<p class="alert error">Configuração de reCAPTCHA ausente.</p>';
+      return;
+    }
+    grecaptcha.render(container, { sitekey: portalConfig.recaptchaSiteKey });
+  };
+</script>
+<script src="https://www.google.com/recaptcha/api.js?onload=initRecaptcha&render=explicit" async defer></script>
 </head>
 <body>
 <header>
@@ -35,7 +47,7 @@
     <label>Fotos / Vídeos / Áudio (opcional)</label>
     <input type="file" name="midias[]" accept="image/*,video/*,audio/*" multiple>
 
-    <div class="g-recaptcha" data-sitekey="6LfplforAAAAAPYv0Y9VkaWFBzGD0NefNbJ8Y7JE"></div>
+    <div id="recaptcha" class="g-recaptcha"></div>
 
     <button type="submit">Enviar Chamado</button>
   </form>

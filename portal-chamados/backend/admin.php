@@ -1,4 +1,13 @@
-<?php include __DIR__ . '/auth.php'; include __DIR__ . '/config.php'; ?>
+<?php
+include __DIR__ . '/auth.php';
+include __DIR__ . '/config.php';
+
+if (!function_exists('portal_escape')) {
+  function portal_escape($value) {
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+  }
+}
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -11,7 +20,7 @@
 <header><img src="../assets/img/kwan_logotipo_v1.png" alt="KWAN"></header>
 <main class="container">
   <h1>Painel de Chamados</h1>
-  <p>Bem-vindo, <b><?=$_SESSION['usuario_nome']?></b> | <a href="logout.php">Sair</a></p>
+  <p>Bem-vindo, <b><?=portal_escape($_SESSION['usuario_nome'] ?? '')?></b> | <a href="logout.php">Sair</a></p>
   <form method="GET">
     <input type="text" name="busca" placeholder="Buscar por código, cliente ou modelo">
     <button type="submit">Buscar</button>
@@ -30,11 +39,11 @@
     <tr><th>Código</th><th>Cliente</th><th>Produto</th><th>Status</th><th>Ações</th></tr>
     <?php while($c = $result->fetch_assoc()): ?>
       <tr>
-        <td><?=$c['codigo_publico']?></td>
-        <td><?=$c['cliente_nome']?></td>
-        <td><?=$c['marca']?> <?=$c['modelo']?></td>
-        <td class="status"><?=$c['status']?></td>
-        <td><a href="admin_ver.php?c=<?=$c['codigo_publico']?>">Abrir</a></td>
+        <td><?=portal_escape($c['codigo_publico'])?></td>
+        <td><?=portal_escape($c['cliente_nome'])?></td>
+        <td><?=portal_escape($c['marca'])?> <?=portal_escape($c['modelo'])?></td>
+        <td class="status"><?=portal_escape($c['status'])?></td>
+        <td><a href="admin_ver.php?c=<?=portal_escape(urlencode($c['codigo_publico']))?>">Abrir</a></td>
       </tr>
     <?php endwhile; ?>
   </table>

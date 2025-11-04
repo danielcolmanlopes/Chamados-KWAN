@@ -4,9 +4,10 @@ require __DIR__ . '/config.php';
 
 // CAPTCHA
 $captcha = $_POST['g-recaptcha-response'] ?? '';
-$secretKey = "6LfplforAAAAAEhRchvQUfQXu1mh45EVzjvwSHHF";
+$secretKey = $portalConfig['recaptcha_secret'] ?? null;
+if (!$secretKey) { echo json_encode(["success"=>false,"message"=>"Configuração de CAPTCHA ausente."]); exit; }
 if (!$captcha) { echo json_encode(["success"=>false,"message"=>"CAPTCHA ausente."]); exit; }
-$verify = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secretKey}&response={$captcha}");
+$verify = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=" . urlencode($secretKey) . "&response=" . urlencode($captcha));
 $resp = json_decode($verify,true);
 if(empty($resp['success'])){ echo json_encode(["success"=>false,"message"=>"CAPTCHA inválido."]); exit; }
 

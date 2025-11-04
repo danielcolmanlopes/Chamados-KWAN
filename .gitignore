@@ -4,3 +4,5 @@
 /uploads/temp/*
 !/uploads/temp/.gitkeep
 composer.lock
+portal-chamados/backend/config.local.php
+portal-chamados/assets/js/config.js
