@@ -450,10 +450,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const portalBase = window.PORTAL_BASE_PATH || (window.location.pathname.includes('/portal-chamados/') ? '' : 'portal-chamados/');
+    const ocrEndpoint = `${portalBase}backend/api_nf_ocr.php`;
+    const salvarEndpoint = `${portalBase}backend/api_nf.php`;
+
     const uploadPdfAndExtract = async (file) => {
         const formData = new FormData();
         formData.append('nf_arquivo', file);
-        const response = await fetch('backend/api_nf_ocr.php', {
+        const response = await fetch(ocrEndpoint, {
             method: 'POST',
             body: formData,
         });
@@ -717,7 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(form);
 
         try {
-            const response = await fetch('backend/api_nf.php', {
+            const response = await fetch(salvarEndpoint, {
                 method: 'POST',
                 body: formData,
             });
