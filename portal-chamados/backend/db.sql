@@ -70,8 +70,16 @@ CREATE TABLE IF NOT EXISTS notas_fiscais (
     valor_icms DECIMAL(14,2) NOT NULL,
     percentual_ipi DECIMAL(7,4) NOT NULL,
     valor_ipi DECIMAL(14,2) NOT NULL,
+    emitente_nome VARCHAR(160) NOT NULL,
+    emitente_cnpj VARCHAR(18) NOT NULL,
+    destinatario_nome VARCHAR(160) NOT NULL,
+    destinatario_cnpj VARCHAR(18) NOT NULL,
+    valor_total DECIMAL(14,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_nf_registro
+    ON notas_fiscais (numero, serie, emitente_cnpj, destinatario_cnpj);
 
 CREATE TABLE IF NOT EXISTS notas_fiscais_itens (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -83,3 +91,11 @@ CREATE TABLE IF NOT EXISTS notas_fiscais_itens (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (nota_fiscal_id) REFERENCES notas_fiscais(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE notas_fiscais
+    ADD COLUMN IF NOT EXISTS emitente_nome VARCHAR(160) NOT NULL AFTER valor_ipi,
+    ADD COLUMN IF NOT EXISTS emitente_cnpj VARCHAR(18) NOT NULL AFTER emitente_nome,
+    ADD COLUMN IF NOT EXISTS destinatario_nome VARCHAR(160) NOT NULL AFTER emitente_cnpj,
+    ADD COLUMN IF NOT EXISTS destinatario_cnpj VARCHAR(18) NOT NULL AFTER destinatario_nome,
+    ADD COLUMN IF NOT EXISTS valor_total DECIMAL(14,2) NOT NULL AFTER destinatario_cnpj,
+    ADD UNIQUE KEY IF NOT EXISTS uniq_nf_registro (numero, serie, emitente_cnpj, destinatario_cnpj);
