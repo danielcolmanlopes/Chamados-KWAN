@@ -78,8 +78,23 @@ CREATE TABLE IF NOT EXISTS notas_fiscais (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE UNIQUE INDEX IF NOT EXISTS uniq_nf_registro
-    ON notas_fiscais (numero, serie, emitente_cnpj, destinatario_cnpj);
+SET @uniq_nf_registro_exists := (
+    SELECT COUNT(1)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'notas_fiscais'
+      AND index_name = 'uniq_nf_registro'
+);
+
+SET @create_uniq_nf_registro := IF(
+    @uniq_nf_registro_exists = 0,
+    'CREATE UNIQUE INDEX uniq_nf_registro ON notas_fiscais (numero, serie, emitente_cnpj, destinatario_cnpj);',
+    'SELECT 1'
+);
+
+PREPARE stmt FROM @create_uniq_nf_registro;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS notas_fiscais_itens (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -97,5 +112,4 @@ ALTER TABLE notas_fiscais
     ADD COLUMN IF NOT EXISTS emitente_cnpj VARCHAR(18) NOT NULL AFTER emitente_nome,
     ADD COLUMN IF NOT EXISTS destinatario_nome VARCHAR(160) NOT NULL AFTER emitente_cnpj,
     ADD COLUMN IF NOT EXISTS destinatario_cnpj VARCHAR(18) NOT NULL AFTER destinatario_nome,
-    ADD COLUMN IF NOT EXISTS valor_total DECIMAL(14,2) NOT NULL AFTER destinatario_cnpj,
-    ADD UNIQUE KEY IF NOT EXISTS uniq_nf_registro (numero, serie, emitente_cnpj, destinatario_cnpj);
+    ADD COLUMN IF NOT EXISTS valor_total DECIMAL(14,2) NOT NULL AFTER destinatario_cnpj;
