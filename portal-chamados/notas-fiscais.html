@@ -25,6 +25,63 @@
 
 <main class="form-page">
     <div class="container narrow">
+        <section class="form-header">
+            <div>
+                <h1>Registrar nota fiscal de entrada</h1>
+                <p>Cadastre as informações fiscais e detalhe todos os itens presentes na nota.</p>
+            </div>
+            <aside class="form-highlight" aria-label="Resumo da automação">
+                <h2>Importação inteligente</h2>
+                <p>Envie um PDF, XML ou imagem da NF e deixe o sistema preencher os campos automaticamente.</p>
+            </aside>
+        </section>
+
+        <section class="ocr-card" aria-labelledby="ocr-title">
+            <div class="ocr-card-header">
+                <div>
+                    <h2 id="ocr-title">Importar nota fiscal automaticamente</h2>
+                    <p class="caption">Arraste o arquivo para a área destacada ou clique para selecionar.</p>
+                </div>
+                <button type="button" id="btn-apply-ocr" class="btn secondary" disabled>Aplicar dados extraídos</button>
+            </div>
+
+            <label class="ocr-dropzone" id="nf-dropzone">
+                <input type="file" id="nf-file" accept=".pdf,.xml,.jpg,.jpeg,.png" hidden>
+                <span class="ocr-icon" aria-hidden="true">📄</span>
+                <p><strong>Arraste e solte</strong> ou clique para enviar a nota fiscal</p>
+                <small>Formatos aceitos: PDF, XML, JPG ou PNG (até 10&nbsp;MB)</small>
+            </label>
+
+            <div id="ocr-status" class="ocr-status">Nenhum arquivo enviado.</div>
+
+            <div id="ocr-results" class="ocr-results hidden" aria-live="polite">
+                <div class="ocr-summary">
+                    <h3>Campos sugeridos</h3>
+                    <dl id="ocr-badges" class="ocr-badges"></dl>
+                </div>
+                <div class="ocr-items">
+                    <h3>Itens identificados</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th>Qtd.</th>
+                                    <th>Vlr. unit.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ocr-items-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <details id="ocr-raw" class="ocr-raw hidden">
+                <summary>Visualizar texto extraído</summary>
+                <pre id="ocr-preview"></pre>
+            </details>
+        </section>
+
         <h1>Registrar nota fiscal de entrada</h1>
         <p>Cadastre as informações fiscais e detalhe todos os itens presentes na nota.</p>
         <div id="nf-msg" class="alert hidden"></div>
@@ -138,6 +195,7 @@
     </div>
 </template>
 
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js" integrity="sha384-nYb3VINeodIZ6Tn6PvxI6Bfq5lHppZArYrusS4x+h0/pk3jfbQfVIAtF+wNCz7Ys" crossorigin="anonymous"></script>
 <script src="assets/js/notas-fiscais.js"></script>
 <script>
     document.getElementById('ano').textContent = new Date().getFullYear();
