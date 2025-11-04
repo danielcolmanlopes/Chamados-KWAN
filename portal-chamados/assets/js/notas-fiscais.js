@@ -617,7 +617,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 fields.itens.length
         );
 
-        return { fields, display, itemsDisplay, hasData };
+        const needsSerial = !fields.numero_serie;
+
+        return { fields, display, itemsDisplay, hasData, needsSerial };
     };
 
     const parseInvoiceText = (text) => {
@@ -814,6 +816,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     data.valor_ipi = getText('vIPI', ipiNode);
                 }
             }
+            if (!data.numero_pedido) {
+                data.numero_pedido = getText('prod > xPed', firstDet) || getText('prod > nItemPed', firstDet);
+            }
+            if (!data.numero_serie) {
+                data.numero_serie = getText('prod > nSerie', firstDet) || getText('prod > nSerieFab', firstDet);
+            }
+            if (!data.codigo_kwan) {
+                const prodCode = getText('prod > cProd', firstDet);
+                if (/kwan/i.test(prodCode)) {
+                    data.codigo_kwan = prodCode;
+                }
+            }
         }
 
         infNFe.querySelectorAll('det').forEach((det) => {
@@ -833,7 +847,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderOcrResults = (normalized, raw) => {
-        const { display, itemsDisplay, hasData } = normalized;
+        const { display, itemsDisplay, hasData, needsSerial } = normalized;
 
         if (badgesList) {
             badgesList.innerHTML = '';
