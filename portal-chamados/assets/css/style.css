@@ -358,7 +358,61 @@ textarea {
     flex-wrap: wrap;
 }
 
-#msg {
+.tributos-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.nf-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    margin-bottom: 1.2rem;
+}
+
+.nf-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: var(--kwan-white);
+    border-radius: var(--radius-medium);
+    padding: 1.2rem;
+    border: 1px solid rgba(230, 27, 63, 0.08);
+    box-shadow: var(--kwan-shadow);
+}
+
+.nf-item .remove-item {
+    align-self: flex-end;
+}
+
+.grid.two.compact {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.8rem;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--kwan-red);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.4rem 0.2rem;
+    align-self: flex-end;
+    transition: color 0.2s ease;
+}
+
+.btn-text:hover {
+    color: #b9102c;
+}
+
+.btn-text.disabled,
+.btn-text:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    color: rgba(28, 27, 27, 0.45);
+}
+
+#msg,
+#nf-msg {
     margin: 1.5rem 0 0;
 }
 
