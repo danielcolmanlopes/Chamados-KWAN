@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Nota Fiscal - KWAN</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" type="image/png" href="assets/img/quadrado.png">
+</head>
+<body>
+<header class="topbar">
+    <div class="container flex-between">
+        <div class="logo-area">
+            <a href="index.html"><img src="assets/img/kwan_logotipo_v1.png" alt="KWAN" class="logo-lg"></a>
+            <a href="index.html"><img src="assets/img/kwan_logotipo_pq.png" alt="KWAN" class="logo-sm"></a>
+        </div>
+        <nav class="nav-links">
+            <a href="abrir-chamado.html" class="btn secondary">Abrir Chamado</a>
+            <a href="acompanhar.html" class="btn outline">Acompanhar</a>
+            <a href="notas-fiscais.html" class="btn primary">Notas Fiscais</a>
+            <a href="backend/login.php" class="link-admin">Área Administrativa</a>
+        </nav>
+    </div>
+</header>
+
+<main class="form-page">
+    <div class="container narrow">
+        <h1>Registrar nota fiscal de entrada</h1>
+        <p>Cadastre as informações fiscais e detalhe todos os itens presentes na nota.</p>
+        <div id="nf-msg" class="alert hidden"></div>
+        <form id="form-nota">
+            <fieldset>
+                <legend>Dados da nota fiscal</legend>
+                <div class="grid two">
+                    <label>Número da NF
+                        <input type="text" name="numero_nf" required maxlength="60" autocomplete="off">
+                    </label>
+                    <label>Série
+                        <input type="text" name="serie" required maxlength="30" autocomplete="off">
+                    </label>
+                    <label>Data de emissão
+                        <input type="date" name="data_emissao" required>
+                    </label>
+                    <label>Estado emissor
+                        <select name="estado_emissor" required>
+                            <option value="">Selecione</option>
+                            <option value="AC">Acre (AC)</option>
+                            <option value="AL">Alagoas (AL)</option>
+                            <option value="AP">Amapá (AP)</option>
+                            <option value="AM">Amazonas (AM)</option>
+                            <option value="BA">Bahia (BA)</option>
+                            <option value="CE">Ceará (CE)</option>
+                            <option value="DF">Distrito Federal (DF)</option>
+                            <option value="ES">Espírito Santo (ES)</option>
+                            <option value="GO">Goiás (GO)</option>
+                            <option value="MA">Maranhão (MA)</option>
+                            <option value="MT">Mato Grosso (MT)</option>
+                            <option value="MS">Mato Grosso do Sul (MS)</option>
+                            <option value="MG">Minas Gerais (MG)</option>
+                            <option value="PA">Pará (PA)</option>
+                            <option value="PB">Paraíba (PB)</option>
+                            <option value="PR">Paraná (PR)</option>
+                            <option value="PE">Pernambuco (PE)</option>
+                            <option value="PI">Piauí (PI)</option>
+                            <option value="RJ">Rio de Janeiro (RJ)</option>
+                            <option value="RN">Rio Grande do Norte (RN)</option>
+                            <option value="RS">Rio Grande do Sul (RS)</option>
+                            <option value="RO">Rondônia (RO)</option>
+                            <option value="RR">Roraima (RR)</option>
+                            <option value="SC">Santa Catarina (SC)</option>
+                            <option value="SP">São Paulo (SP)</option>
+                            <option value="SE">Sergipe (SE)</option>
+                            <option value="TO">Tocantins (TO)</option>
+                        </select>
+                    </label>
+                    <label>Transportadora
+                        <input type="text" name="transportadora" required maxlength="150" autocomplete="off">
+                    </label>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Tributos</legend>
+                <div class="grid two tributos-grid">
+                    <label>% ICMS
+                        <input type="number" name="percentual_icms" min="0" step="0.01" placeholder="0,00" required>
+                    </label>
+                    <label>Valor ICMS (R$)
+                        <input type="number" name="valor_icms" min="0" step="0.01" placeholder="0,00" required>
+                    </label>
+                    <label>% IPI
+                        <input type="number" name="percentual_ipi" min="0" step="0.01" placeholder="0,00" required>
+                    </label>
+                    <label>Valor IPI (R$)
+                        <input type="number" name="valor_ipi" min="0" step="0.01" placeholder="0,00" required>
+                    </label>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Itens da nota fiscal</legend>
+                <p class="caption">Adicione todos os itens presentes na NF. Informe descrição, quantidade e valor unitário.</p>
+                <div id="itens-container" class="nf-items"></div>
+                <button type="button" id="add-item" class="btn outline">Adicionar item</button>
+            </fieldset>
+
+            <div class="form-actions">
+                <button type="submit" class="btn primary">Salvar nota fiscal</button>
+                <a href="index.html" class="btn outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container flex-between">
+        <p>&copy; <span id="ano"></span> KWAN. Todos os direitos reservados.</p>
+        <p class="contact">Suporte: <a href="mailto:suporte@kwansolucoes.com.br">suporte@kwansolucoes.com.br</a></p>
+    </div>
+</footer>
+
+<template id="item-template">
+    <div class="nf-item" data-index="">
+        <div class="grid two">
+            <label>Descrição do item
+                <input type="text" data-name="descricao" required maxlength="200" autocomplete="off">
+            </label>
+            <div class="grid two compact">
+                <label>Quantidade
+                    <input type="number" data-name="quantidade" min="0" step="0.01" placeholder="0" required>
+                </label>
+                <label>Valor unitário (R$)
+                    <input type="number" data-name="valor_unitario" min="0" step="0.01" placeholder="0,00" required>
+                </label>
+            </div>
+        </div>
+        <button type="button" class="btn-text remove-item">Remover</button>
+    </div>
+</template>
+
+<script src="assets/js/notas-fiscais.js"></script>
+<script>
+    document.getElementById('ano').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
