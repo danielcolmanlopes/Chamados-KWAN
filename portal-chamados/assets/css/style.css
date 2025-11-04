@@ -153,17 +153,58 @@ img {
     box-shadow: var(--kwan-shadow);
 }
 
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 1.1rem;
+    border-radius: 999px;
+    background: rgba(230, 27, 63, 0.1);
+    color: var(--kwan-red);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    margin-bottom: 1.4rem;
+}
+
 .hero h1 {
     font-size: clamp(2.6rem, 3vw + 1rem, 3.8rem);
     margin-bottom: 1rem;
     letter-spacing: -0.01em;
 }
 
-.hero p {
+.hero p,
+.hero-highlights li {
     font-size: 1.1rem;
     margin: 0.5rem auto 1.6rem;
     max-width: 680px;
     color: var(--kwan-dark-80);
+}
+
+.hero-highlights {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.8rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.hero-highlights li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+}
+
+.hero-highlights li::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e61b3f, #fd4b6b);
+    box-shadow: 0 4px 12px rgba(230, 27, 63, 0.35);
+    flex-shrink: 0;
 }
 
 .hero-actions {
@@ -235,11 +276,105 @@ img {
     font-size: 0.85rem;
 }
 
-.features {
-    margin: -2.6rem 0 4rem;
+.service-score {
+    display: flex;
+    justify-content: center;
+    gap: 2.4rem;
+    margin: 1.2rem auto 0;
+    flex-wrap: wrap;
 }
 
-.features .grid {
+.service-score div {
+    display: grid;
+    gap: 0.2rem;
+    text-align: center;
+}
+
+.service-score strong {
+    font-size: 2rem;
+    color: var(--kwan-dark);
+}
+
+.service-score span {
+    font-size: 0.95rem;
+    color: rgba(28, 27, 27, 0.65);
+}
+
+.metrics {
+    margin: -2.6rem 0 3.5rem;
+}
+
+.metrics-wrapper {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.metric-item {
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: var(--radius-large);
+    padding: 2rem 1.8rem;
+    box-shadow: var(--kwan-shadow);
+    border: 1px solid rgba(230, 27, 63, 0.08);
+    display: grid;
+    gap: 0.5rem;
+}
+
+.metric-title {
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(28, 27, 27, 0.6);
+}
+
+.metric-item strong {
+    font-size: 2.3rem;
+    color: var(--kwan-dark);
+}
+
+.metric-item p {
+    margin: 0;
+    color: rgba(28, 27, 27, 0.65);
+    line-height: 1.6;
+}
+
+.features {
+    margin: 0 0 3.8rem;
+}
+
+.section-header {
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto 2.5rem;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: clamp(2rem, 2vw + 1rem, 2.8rem);
+}
+
+.section-header p {
+    margin: 0;
+    color: rgba(28, 27, 27, 0.7);
+    line-height: 1.7;
+}
+
+.section-badge {
+    display: inline-flex;
+    padding: 0.35rem 1rem;
+    border-radius: 999px;
+    background: rgba(230, 27, 63, 0.12);
+    color: var(--kwan-red);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    justify-self: center;
+}
+
+.feature-grid {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
@@ -255,6 +390,109 @@ img {
 .card:hover {
     transform: translateY(-6px);
     box-shadow: 0 26px 50px rgba(28, 27, 27, 0.12);
+}
+
+.card h3 {
+    margin-top: 0;
+    font-size: 1.35rem;
+}
+
+.steps {
+    margin: 0 0 3.8rem;
+}
+
+.steps-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.step-card {
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: var(--radius-large);
+    padding: 2.2rem 1.8rem;
+    box-shadow: var(--kwan-shadow);
+    border: 1px solid rgba(230, 27, 63, 0.1);
+    display: grid;
+    gap: 0.8rem;
+    position: relative;
+}
+
+.step-number {
+    position: absolute;
+    top: -24px;
+    left: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #e61b3f, #fd4b6b);
+    color: var(--kwan-white);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+    box-shadow: 0 18px 36px rgba(230, 27, 63, 0.25);
+}
+
+.testimonials {
+    margin: 0 0 3.8rem;
+}
+
+.testimonial-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.testimonial-card {
+    background: rgba(28, 27, 27, 0.94);
+    color: var(--kwan-white);
+    border-radius: var(--radius-large);
+    padding: 2.2rem 2rem;
+    box-shadow: 0 24px 45px rgba(28, 27, 27, 0.28);
+    display: grid;
+    gap: 1.2rem;
+}
+
+.testimonial-card p {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.author {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.cta-banner {
+    margin: 0 0 4rem;
+}
+
+.cta-banner-content {
+    background: linear-gradient(135deg, rgba(28, 27, 27, 0.96), rgba(35, 35, 35, 0.92));
+    color: var(--kwan-white);
+    border-radius: calc(var(--radius-large) + 6px);
+    padding: 3rem 3.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+    align-items: flex-start;
+    box-shadow: 0 28px 60px rgba(28, 27, 27, 0.35);
+}
+
+.cta-banner h2 {
+    font-size: clamp(2rem, 2vw + 1rem, 2.6rem);
+    margin: 0 0 0.6rem;
+}
+
+.cta-banner p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 600px;
+    line-height: 1.7;
+}
+
+.cta-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .footer {
@@ -913,6 +1151,14 @@ form.inline {
         width: 100%;
     }
 
+    .service-score {
+        gap: 1.6rem;
+    }
+
+    .cta-banner-content {
+        padding: 2.6rem;
+    }
+
     .search-input {
         flex-direction: column;
     }
@@ -941,6 +1187,24 @@ form.inline {
 
     .hero-content {
         padding: 2.2rem 1.6rem;
+    }
+
+    .hero-highlights {
+        text-align: left;
+    }
+
+    .service-score {
+        gap: 1.2rem;
+    }
+
+    .cta-banner-content {
+        text-align: center;
+        align-items: center;
+    }
+
+    .cta-actions {
+        width: 100%;
+        justify-content: center;
     }
 
     form fieldset {
