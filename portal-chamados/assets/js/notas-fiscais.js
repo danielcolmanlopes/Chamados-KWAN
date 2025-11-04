@@ -236,6 +236,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return `KWAN-${digits}`;
     };
 
+    const normalizeOrderValue = (value) => {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        const text = String(value).trim();
+        if (!text) {
+            return '';
+        }
+        const withoutLabel = text.replace(/pedido\s*[:#-]?\s*/gi, '');
+        const cleaned = withoutLabel.replace(/\s+/g, ' ');
+        return cleaned;
+    };
+
     const calculateItemsTotal = (items) => {
         if (!Array.isArray(items) || !items.length) {
             return null;
