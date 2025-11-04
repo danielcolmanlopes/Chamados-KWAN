@@ -200,6 +200,41 @@ document.addEventListener('DOMContentLoaded', () => {
         return String(value).replace(/\D/g, '');
     };
 
+    const extractKwanCodeFromText = (value) => {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        const text = String(value).toUpperCase();
+        const match = text.match(/KWAN[\s:_-]*([0-9][0-9A-Z\/.\-]*)/);
+        if (!match) {
+            return '';
+        }
+        const digits = match[1].replace(/\D/g, '');
+        if (!digits) {
+            return '';
+        }
+        return `KWAN-${digits}`;
+    };
+
+    const normalizeKwanCodeValue = (value) => {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        const trimmed = String(value).trim();
+        if (!trimmed) {
+            return '';
+        }
+        const extracted = extractKwanCodeFromText(trimmed);
+        if (extracted) {
+            return extracted;
+        }
+        const digits = trimmed.replace(/\D/g, '');
+        if (!digits) {
+            return '';
+        }
+        return `KWAN-${digits}`;
+    };
+
     const calculateItemsTotal = (items) => {
         if (!Array.isArray(items) || !items.length) {
             return null;
@@ -357,6 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const emitenteDocumento = normalizeDocument(getValue('emitente_cnpj'));
         const destinatarioDocumento = normalizeDocument(getValue('destinatario_cnpj'));
+        const codigoKwan = normalizeKwanCodeValue(getValue('codigo_kwan'));
+        const observacoes = getValue('observacoes');
 
         return {
             numero_nf: getValue('numero_nf'),
@@ -375,6 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
             destinatario_cnpj: destinatarioDocumento,
             destinatario_cnpj_display: toDisplayDocument(destinatarioDocumento) || getValue('destinatario_cnpj'),
             valor_total: Number.isFinite(total) ? Number(total.toFixed(2)) : 0,
+            codigo_kwan: codigoKwan,
+            observacoes,
             itens,
         };
     };
@@ -406,6 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="muted">${[
                             invoice.serie ? `Série ${escapeXml(invoice.serie)}` : '',
                             invoice.data_emissao ? `Emitida em ${formatDateDisplay(invoice.data_emissao)}` : '',
+                            invoice.codigo_kwan ? escapeXml(invoice.codigo_kwan) : '',
                         ]
                             .filter(Boolean)
                             .join(' • ')}</span>
@@ -523,6 +563,18 @@ document.addEventListener('DOMContentLoaded', () => {
             xmlLines.push('    </itens>');
 
             xmlLines.push(`    <valorTotal>${formatNumberForXml(invoice.valor_total)}</valorTotal>`);
+
+            if (invoice.codigo_kwan || invoice.observacoes) {
+                xmlLines.push('    <informacoesAdicionais>');
+                if (invoice.codigo_kwan) {
+                    xmlLines.push(`      <codigoKWAN>${escapeXml(invoice.codigo_kwan)}</codigoKWAN>`);
+                }
+                if (invoice.observacoes) {
+                    xmlLines.push(`      <observacoes>${escapeXml(invoice.observacoes)}</observacoes>`);
+                }
+                xmlLines.push('    </informacoesAdicionais>');
+            }
+
             xmlLines.push('  </notaFiscal>');
         });
 
@@ -558,6 +610,8 @@ document.addEventListener('DOMContentLoaded', () => {
             destinatario_nome: (data?.destinatario_nome ?? data?.destinatarioNome ?? data?.destinatario ?? '').toString().trim(),
             destinatario_cnpj: (data?.destinatario_cnpj ?? data?.destinatarioCnpj ?? data?.cnpj_destinatario ?? '').toString().trim(),
             valor_total: formatDecimal(data?.valor_total ?? data?.valorTotal ?? data?.total ?? '', 2),
+            observacoes: (data?.observacoes ?? data?.observacao ?? data?.informacoes ?? data?.infoAdicional ?? '').toString().trim(),
+            codigo_kwan: normalizeKwanCodeValue(data?.codigo_kwan ?? data?.codigoKwan ?? data?.kwan ?? ''),
             itens: Array.isArray(data?.itens)
                 ? data.itens.map((item) => ({
                       descricao: (item?.descricao ?? '').toString().trim(),
@@ -568,6 +622,10 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         fields.itens = fields.itens.filter((item) => item.descricao && item.quantidade !== null);
+
+        if (!fields.codigo_kwan && fields.observacoes) {
+            fields.codigo_kwan = extractKwanCodeFromText(fields.observacoes) || '';
+        }
 
         if (fields.valor_total === null) {
             const itemsTotal = calculateItemsTotal(fields.itens);
@@ -591,6 +649,8 @@ document.addEventListener('DOMContentLoaded', () => {
             destinatario_nome: fields.destinatario_nome,
             destinatario_cnpj: toDisplayDocument(fields.destinatario_cnpj),
             valor_total: fields.valor_total !== null ? toDisplayCurrency(fields.valor_total) : '',
+            codigo_kwan: fields.codigo_kwan,
+            observacoes: fields.observacoes.replace(/\s+/g, ' '),
         };
 
         const itemsDisplay = fields.itens.map((item) => ({
@@ -614,6 +674,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 fields.destinatario_nome ||
                 fields.destinatario_cnpj ||
                 fields.valor_total !== null ||
+                fields.codigo_kwan ||
+                fields.observacoes ||
                 fields.itens.length
         );
 
@@ -632,7 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter(Boolean);
         const joined = lines.join(' ');
 
-        const data = { itens: [] };
+        const data = { itens: [], observacoes: '', codigo_kwan: '' };
 
         const sanitizeName = (text) =>
             text
@@ -671,6 +733,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const destinatarioLine = lines.find((line) => /destinat[áa]rio[:\s-]/i.test(line));
         if (destinatarioLine && !data.destinatario_nome) {
             data.destinatario_nome = sanitizeName(destinatarioLine);
+        }
+
+        const observacoesIndex = lines.findIndex((line) => /observa[çc][õo]es?/i.test(line));
+        if (observacoesIndex !== -1) {
+            const collected = [];
+            for (let i = observacoesIndex; i < lines.length && collected.length < 5; i += 1) {
+                const currentLine = lines[i];
+                if (
+                    i !== observacoesIndex &&
+                    /^(?:dados|itens|produtos|tributos|emitente|destinat[áa]rio|transporte)\b/i.test(currentLine)
+                ) {
+                    break;
+                }
+                collected.push(currentLine);
+            }
+            const obsText = collected.join(' ').replace(/^[^:]*:/, '').trim();
+            if (obsText) {
+                data.observacoes = obsText;
+            }
         }
 
         const nfMatch = joined.match(/(?:NF[-\s]?E?|NOTA\s+FISCAL)[^0-9]*(\d{3,})/i);
@@ -728,6 +809,11 @@ document.addEventListener('DOMContentLoaded', () => {
             joined.match(/v(?:l)?\.?\s*nf[^0-9]*(\d+[.,]\d{2,})/i);
         if (totalMatch) {
             data.valor_total = totalMatch[1];
+        }
+
+        const kwanCode = extractKwanCodeFromText(joined) || extractKwanCodeFromText(data.observacoes);
+        if (kwanCode) {
+            data.codigo_kwan = kwanCode;
         }
 
         const itemRegex = /^(\d{1,3})\s+(.+?)\s+(\d+(?:[.,]\d{1,3}))\s+(?:UN|UND|UNID|PC|KG|LT|CX|DZ|SC|M|MT|PCT|ROL)?\s+(\d+(?:[.,]\d{1,4}))/i;
@@ -794,6 +880,8 @@ document.addEventListener('DOMContentLoaded', () => {
             destinatario_nome: getText('dest > xNome'),
             destinatario_cnpj: getText('dest > CNPJ') || getText('dest > CPF'),
             valor_total: getText('total > ICMSTot > vNF') || getText('total > ICMSTot > vProd'),
+            observacoes: '',
+            codigo_kwan: '',
             itens: [],
         };
 
@@ -829,6 +917,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        const infAdic = infNFe.querySelector('infAdic');
+        if (infAdic) {
+            const notes = [];
+            const infoComplementar = getText('infCpl', infAdic);
+            if (infoComplementar) {
+                notes.push(infoComplementar);
+            }
+            infAdic.querySelectorAll('obsCont, obsFisco').forEach((node) => {
+                const campo = node.getAttribute?.('xCampo') || '';
+                if (campo) {
+                    notes.push(campo);
+                }
+                const text = getText('xTexto', node) || node.textContent?.trim() || '';
+                if (text) {
+                    notes.push(text);
+                }
+            });
+            if (notes.length) {
+                data.observacoes = notes.join('\n');
+            }
+        }
+
+        if (!data.codigo_kwan) {
+            data.codigo_kwan =
+                extractKwanCodeFromText(getText('det > prod > xPed')) || extractKwanCodeFromText(data.observacoes);
+        }
+
         return { data, raw: xmlString };
     };
 
@@ -852,6 +967,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 { label: 'Destinatário', value: display.destinatario_nome },
                 { label: 'CNPJ do destinatário', value: display.destinatario_cnpj },
                 { label: 'Valor total', value: display.valor_total },
+                { label: 'Código KWAN', value: display.codigo_kwan },
+                {
+                    label: 'Observações',
+                    value: display.observacoes
+                        ? `${display.observacoes.slice(0, 220)}${display.observacoes.length > 220 ? '…' : ''}`
+                        : '',
+                },
             ].filter((entry) => entry.value);
 
             if (!entries.length) {
@@ -1082,6 +1204,8 @@ document.addEventListener('DOMContentLoaded', () => {
         assignValue('destinatario_nome', extractedData.destinatario_nome ?? '');
         assignValue('destinatario_cnpj', extractedData.destinatario_cnpj ?? '');
         assignValue('valor_total', extractedData.valor_total ?? '');
+        assignValue('codigo_kwan', extractedData.codigo_kwan ?? '');
+        assignValue('observacoes', extractedData.observacoes ?? '');
 
         const estadoSelect = form.elements.namedItem('estado_emissor');
         if (estadoSelect instanceof HTMLSelectElement && extractedData.estado_emissor) {
