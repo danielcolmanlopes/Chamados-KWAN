@@ -450,10 +450,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const portalBase = window.PORTAL_BASE_PATH || (window.location.pathname.includes('/portal-chamados/') ? '' : 'portal-chamados/');
+    const ocrEndpoint = `${portalBase}backend/api_nf_ocr.php`;
+    const salvarEndpoint = `${portalBase}backend/api_nf.php`;
+
     const uploadPdfAndExtract = async (file) => {
         const formData = new FormData();
         formData.append('nf_arquivo', file);
-        const response = await fetch('backend/api_nf_ocr.php', {
+        const response = await fetch(ocrEndpoint, {
             method: 'POST',
             body: formData,
         });
@@ -568,10 +572,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const addItem = (itemData = null) => {
         const fragment = template.content.cloneNode(true);
         const newItem = fragment.querySelector('.nf-item');
-        if (itemData && newItem) {
+
+        if (newItem && itemData) {
             const descricaoInput = newItem.querySelector('[data-name="descricao"]');
             const quantidadeInput = newItem.querySelector('[data-name="quantidade"]');
             const valorUnitarioInput = newItem.querySelector('[data-name="valor_unitario"]');
+
             if (descricaoInput) {
                 descricaoInput.value = itemData.descricao ?? '';
             }
@@ -582,8 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 valorUnitarioInput.value = itemData.valor_unitario ?? '';
             }
         }
-    const addItem = () => {
-        const fragment = template.content.cloneNode(true);
+
         container.appendChild(fragment);
         reindexItems();
         updateRemoveButtons();
@@ -717,7 +722,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(form);
 
         try {
-            const response = await fetch('backend/api_nf.php', {
+            const response = await fetch(salvarEndpoint, {
                 method: 'POST',
                 body: formData,
             });

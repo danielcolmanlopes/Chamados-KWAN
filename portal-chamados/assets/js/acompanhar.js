@@ -1,4 +1,5 @@
-const apiBase = 'backend';
+const portalBase = window.PORTAL_BASE_PATH || (window.location.pathname.includes('/portal-chamados/') ? '' : 'portal-chamados/');
+const apiBase = `${portalBase}backend`;
 
 function formatDateTime(dateStr) {
     if (!dateStr) return '-';
@@ -114,8 +115,9 @@ function setupMensagem() {
         body.set('codigo', codigo);
         body.set('mensagem', mensagem);
 
-        form.querySelector('button').disabled = true;
-        form.querySelector('button').textContent = 'Enviando...';
+        const button = form.querySelector('button');
+        button.disabled = true;
+        button.textContent = 'Enviando...';
 
         try {
             const response = await fetch(`${apiBase}/api_get.php`, {
@@ -132,8 +134,8 @@ function setupMensagem() {
         } catch (error) {
             alert(error.message);
         } finally {
-            form.querySelector('button').disabled = false;
-            form.querySelector('button').textContent = 'Enviar mensagem';
+            button.disabled = false;
+            button.textContent = 'Enviar mensagem';
         }
     });
 }
