@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS notas_fiscais_itens (
     quantidade DECIMAL(14,3) NOT NULL,
     valor_unitario DECIMAL(14,2) NOT NULL,
     valor_total DECIMAL(14,2) NOT NULL,
+    pedido VARCHAR(60) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (nota_fiscal_id) REFERENCES notas_fiscais(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
