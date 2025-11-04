@@ -582,6 +582,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 valorUnitarioInput.value = itemData.valor_unitario ?? '';
             }
         }
+    const addItem = () => {
+        const fragment = template.content.cloneNode(true);
         container.appendChild(fragment);
         reindexItems();
         updateRemoveButtons();
