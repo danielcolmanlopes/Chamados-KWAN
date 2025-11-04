@@ -382,6 +382,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return respondWithError('Preencha os campos obrigatórios antes de adicionar ao lote.');
         }
 
+        const numeroPedidoValue = formData.get('numero_pedido');
+        const numeroPedido = normalizeOrderValue(numeroPedidoValue);
+        const numeroSerieValue = formData.get('numero_serie');
+        const numeroSerie = numeroSerieValue ? numeroSerieValue.toString().trim() : '';
+
         const itens = [];
         container.querySelectorAll('.nf-item').forEach((item) => {
             const descricao = item.querySelector('[data-name="descricao"]');
@@ -438,8 +443,8 @@ document.addEventListener('DOMContentLoaded', () => {
             destinatario_nome: getValue('destinatario_nome'),
             destinatario_cnpj: destinatarioDocumento,
             destinatario_cnpj_display: toDisplayDocument(destinatarioDocumento) || getValue('destinatario_cnpj'),
-            numero_pedido: numeroPedido,
-            numero_serie: numeroSerie,
+            numero_pedido: numeroPedido || null,
+            numero_serie: numeroSerie || null,
             codigo_kwan: codigoKwan,
             valor_total: Number.isFinite(total) ? Number(total.toFixed(2)) : 0,
             codigo_kwan: codigoKwan,
