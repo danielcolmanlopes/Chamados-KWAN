@@ -7,11 +7,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const usePhpRoutes = basePath !== '';
     const acompanharPage = usePhpRoutes ? 'acompanhar.php' : 'acompanhar.html';
 
+    let floatingMessageTimeout = null;
+
+    const ensureFloatingAlert = () => {
+        let element = document.getElementById('floating-alert');
+        if (!element) {
+            element = document.createElement('div');
+            element.id = 'floating-alert';
+            element.className = 'floating-alert hidden';
+            element.setAttribute('role', 'alert');
+            element.setAttribute('aria-live', 'assertive');
+            document.body.appendChild(element);
+        }
+        return element;
+    };
+
+    const hideFloatingAlert = (element) => {
+        if (!element) {
+            return;
+        }
+        element.classList.remove('visible');
+        const handleTransitionEnd = () => {
+            element.classList.add('hidden');
+            element.removeEventListener('transitionend', handleTransitionEnd);
+        };
+        element.addEventListener('transitionend', handleTransitionEnd, { once: true });
+    };
+
+    const showFloatingAlert = (message, type) => {
+        const element = ensureFloatingAlert();
+        element.className = `floating-alert alert ${type}`;
+        element.innerHTML = message;
+        element.classList.remove('hidden');
+
+        element.classList.remove('visible');
+        element.offsetHeight;
+        element.classList.add('visible');
+
+        if (floatingMessageTimeout) {
+            window.clearTimeout(floatingMessageTimeout);
+        }
+
+        floatingMessageTimeout = window.setTimeout(() => {
+            hideFloatingAlert(element);
+        }, 6000);
+    };
+
     const showMessage = (message, type = 'success') => {
         msgBox.className = `alert ${type}`;
         msgBox.innerHTML = message;
         msgBox.classList.remove('hidden');
         msgBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showFloatingAlert(message, type);
     };
 
     if (!form) return;
@@ -30,9 +77,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData
             });
 
-            const data = await response.json();
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || 'Não foi possível registrar o chamado.');
+            const rawBody = await response.text();
+            let data = null;
+
+            if (rawBody) {
+                try {
+                    data = JSON.parse(rawBody);
+                } catch (parseError) {
+                    console.error('Resposta não está em JSON válido.', parseError);
+                }
+            }
+
+            if (!response.ok || !data?.success) {
+                const errorMessage = data?.message || rawBody || 'Não foi possível registrar o chamado.';
+                throw new Error(errorMessage.trim());
             }
 
             form.reset();

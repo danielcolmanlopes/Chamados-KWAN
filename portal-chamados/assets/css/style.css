@@ -1076,6 +1076,24 @@ textarea {
     border: 1px solid transparent;
 }
 
+.floating-alert {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 4000;
+    margin-top: 0;
+    max-width: min(420px, calc(100% - 3rem));
+    box-shadow: 0 20px 45px rgba(17, 24, 39, 0.18);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.floating-alert.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .alert.success {
     background: #e9f9ef;
     border-color: #9bd6b2;

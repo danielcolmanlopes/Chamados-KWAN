@@ -17,7 +17,15 @@ $mysqli->set_charset('utf8mb4');
 
 function sanitize_text($value)
 {
-    return trim(filter_var($value ?? '', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES));
+    if ($value === null) {
+        return '';
+    }
+
+    $string = trim((string) $value);
+    $string = strip_tags($string);
+    $string = preg_replace('/[\x00-\x1F\x7F]+/u', '', $string);
+
+    return $string === null ? '' : trim($string);
 }
 
 function generate_codigo()
