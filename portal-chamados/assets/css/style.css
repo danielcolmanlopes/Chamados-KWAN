@@ -69,6 +69,10 @@ img {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.grid.two .full-width {
+    grid-column: 1 / -1;
+}
+
 .topbar {
     background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(8px);

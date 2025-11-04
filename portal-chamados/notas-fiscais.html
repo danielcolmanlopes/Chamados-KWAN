@@ -82,8 +82,6 @@
             </details>
         </section>
 
-        <h1>Registrar nota fiscal de entrada</h1>
-        <p>Cadastre as informações fiscais e detalhe todos os itens presentes na nota.</p>
         <div id="nf-msg" class="alert hidden"></div>
 
         <section class="form-quick-actions" aria-label="Ações rápidas de preenchimento">
@@ -169,6 +167,18 @@
                             <input type="text" name="destinatario_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
                         </label>
                     </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Informações adicionais</legend>
+                <div class="grid two">
+                    <label>Código KWAN
+                        <input type="text" name="codigo_kwan" maxlength="20" autocomplete="off" placeholder="KWAN-0000">
+                    </label>
+                    <label class="full-width">Observações da nota fiscal
+                        <textarea name="observacoes" rows="4" placeholder="Informações complementares ou código KWAN descrito na nota"></textarea>
+                    </label>
                 </div>
             </fieldset>
 
