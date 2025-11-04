@@ -1773,9 +1773,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData,
             });
 
-            const data = await response.json();
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || 'Não foi possível salvar a nota fiscal.');
+            const rawBody = await response.text();
+            let data = null;
+
+            if (rawBody) {
+                try {
+                    data = JSON.parse(rawBody);
+                } catch (parseError) {
+                    console.error('Resposta não está em JSON válido.', parseError);
+                }
+            }
+
+            if (!response.ok || !data?.success) {
+                const errorMessage = data?.message || rawBody || 'Não foi possível salvar a nota fiscal.';
+                throw new Error(errorMessage.trim());
             }
 
             form.reset();
