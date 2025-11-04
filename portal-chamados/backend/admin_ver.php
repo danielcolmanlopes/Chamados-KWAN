@@ -147,6 +147,12 @@ $anexoStmt->close();
                 <p><strong>E-mail:</strong> <a href="mailto:<?php echo htmlspecialchars($chamado['cliente_email'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($chamado['cliente_email'], ENT_QUOTES, 'UTF-8'); ?></a></p>
                 <p><strong>Telefone:</strong> <?php echo htmlspecialchars($chamado['cliente_telefone'], ENT_QUOTES, 'UTF-8'); ?></p>
                 <p><strong>Documento:</strong> <?php echo htmlspecialchars($chamado['cliente_cnpj'], ENT_QUOTES, 'UTF-8'); ?></p>
+                <?php if (!empty($chamado['endereco_faturamento'])): ?>
+                    <p><strong>Endereço de faturamento:</strong><br><?php echo nl2br(htmlspecialchars($chamado['endereco_faturamento'], ENT_QUOTES, 'UTF-8')); ?></p>
+                <?php endif; ?>
+                <?php if (!empty($chamado['endereco_entrega'])): ?>
+                    <p><strong>Endereço de entrega:</strong><br><?php echo nl2br(htmlspecialchars($chamado['endereco_entrega'], ENT_QUOTES, 'UTF-8')); ?></p>
+                <?php endif; ?>
             </div>
 
             <div class="admin-card">
@@ -155,12 +161,19 @@ $anexoStmt->close();
                 <p><strong>Modelo:</strong> <?php echo htmlspecialchars($chamado['produto_modelo'], ENT_QUOTES, 'UTF-8'); ?></p>
                 <p><strong>Serial:</strong> <?php echo htmlspecialchars($chamado['produto_serial'], ENT_QUOTES, 'UTF-8'); ?></p>
                 <p><strong>Data da compra:</strong> <?php echo htmlspecialchars(date('d/m/Y', strtotime($chamado['produto_data_compra'])), ENT_QUOTES, 'UTF-8'); ?></p>
+                <?php if (!empty($chamado['loja'])): ?>
+                    <p><strong>Loja:</strong> <?php echo htmlspecialchars($chamado['loja'], ENT_QUOTES, 'UTF-8'); ?></p>
+                <?php endif; ?>
             </div>
         </div>
 
         <div class="admin-card">
             <h2>Descrição do problema</h2>
             <p><?php echo nl2br(htmlspecialchars($chamado['descricao_problema'], ENT_QUOTES, 'UTF-8')); ?></p>
+            <?php if (!empty($chamado['observacao2'])): ?>
+                <hr>
+                <p><strong>Observação adicional:</strong><br><?php echo nl2br(htmlspecialchars($chamado['observacao2'], ENT_QUOTES, 'UTF-8')); ?></p>
+            <?php endif; ?>
         </div>
 
         <div class="grid two">

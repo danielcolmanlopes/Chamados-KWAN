@@ -59,6 +59,15 @@ foreach ($requiredFields as $field) {
     $data[$field] = $value;
 }
 
+$optionalFields = [
+    'loja' => sanitize_text($_POST['loja'] ?? ''),
+    'observacao2' => sanitize_text($_POST['observacao2'] ?? ''),
+    'endereco_faturamento' => sanitize_text($_POST['endereco_faturamento'] ?? ''),
+    'endereco_entrega' => sanitize_text($_POST['endereco_entrega'] ?? ''),
+];
+
+$data = array_merge($data, $optionalFields);
+
 if (!filter_var($data['cliente_email'], FILTER_VALIDATE_EMAIL)) {
     echo json_encode(['success' => false, 'message' => 'E-mail inválido.']);
     exit;
@@ -106,7 +115,7 @@ if (!move_uploaded_file($nfFile['tmp_name'], $nfPath)) {
 
 $nfRelative = 'uploads/' . $nfFilename;
 
-$stmt = $mysqli->prepare("INSERT INTO chamados (codigo, cliente_nome, cliente_email, cliente_telefone, cliente_cnpj, produto_marca, produto_modelo, produto_serial, produto_data_compra, nf_original, descricao_problema, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aberto')");
+$stmt = $mysqli->prepare("INSERT INTO chamados (codigo, cliente_nome, cliente_email, cliente_telefone, cliente_cnpj, produto_marca, produto_modelo, produto_serial, produto_data_compra, nf_original, descricao_problema, loja, observacao2, endereco_faturamento, endereco_entrega, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aberto')");
 if (!$stmt) {
     unlink($nfPath);
     echo json_encode(['success' => false, 'message' => 'Erro ao preparar inserção do chamado.']);
@@ -114,7 +123,7 @@ if (!$stmt) {
 }
 
 $stmt->bind_param(
-    'sssssssssss',
+    'sssssssssssssss',
     $codigo,
     $data['cliente_nome'],
     $data['cliente_email'],
@@ -125,7 +134,11 @@ $stmt->bind_param(
     $data['produto_serial'],
     $data['produto_data_compra'],
     $nfRelative,
-    $data['descricao_problema']
+    $data['descricao_problema'],
+    $data['loja'],
+    $data['observacao2'],
+    $data['endereco_faturamento'],
+    $data['endereco_entrega']
 );
 
 if (!$stmt->execute()) {

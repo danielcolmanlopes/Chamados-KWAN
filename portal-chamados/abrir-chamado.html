@@ -45,6 +45,12 @@
                         <input type="text" name="cliente_cnpj" required maxlength="30">
                     </label>
                 </div>
+                <label>Endereço de faturamento
+                    <textarea name="endereco_faturamento" rows="3" maxlength="500" placeholder="Rua, número, bairro, cidade e CEP"></textarea>
+                </label>
+                <label>Endereço de entrega
+                    <textarea name="endereco_entrega" rows="3" maxlength="500" placeholder="Rua, número, bairro, cidade e CEP"></textarea>
+                </label>
             </fieldset>
 
             <fieldset>
@@ -62,9 +68,15 @@
                     <label>Data da compra
                         <input type="date" name="produto_data_compra" required>
                     </label>
+                    <label>Loja (opcional)
+                        <input type="text" name="loja" maxlength="150" placeholder="Nome da loja onde a compra foi realizada">
+                    </label>
                 </div>
                 <label>Descrição detalhada do problema
                     <textarea name="descricao_problema" rows="5" required maxlength="2000"></textarea>
+                </label>
+                <label>Observação adicional
+                    <textarea name="observacao2" rows="3" maxlength="1000" placeholder="Informações complementares importantes"></textarea>
                 </label>
             </fieldset>
 

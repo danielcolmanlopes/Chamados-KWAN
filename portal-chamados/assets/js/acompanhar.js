@@ -14,6 +14,27 @@ function sanitize(text) {
     return div.innerHTML;
 }
 
+function fillOptional(wrapperId, contentId, value, multiline = false) {
+    const wrapper = document.getElementById(wrapperId);
+    const content = document.getElementById(contentId);
+    if (!wrapper || !content) return;
+
+    const trimmed = (value || '').trim();
+    if (trimmed.length === 0) {
+        content.textContent = '';
+        wrapper.hidden = true;
+        return;
+    }
+
+    if (multiline) {
+        const sanitized = sanitize(trimmed).replace(/\n/g, '<br>');
+        content.innerHTML = sanitized;
+    } else {
+        content.textContent = trimmed;
+    }
+    wrapper.hidden = false;
+}
+
 function renderChamado(data) {
     const infoBox = document.getElementById('info-chamado');
     const statusEl = document.getElementById('status-atual');
@@ -29,6 +50,11 @@ function renderChamado(data) {
     produto.textContent = `${data.produto_marca} • ${data.produto_modelo} • Série ${data.produto_serial}`;
     dataAbertura.textContent = formatDateTime(data.created_at);
     descricao.textContent = data.descricao_problema;
+
+    fillOptional('info-loja', 'loja', data.loja);
+    fillOptional('info-endereco-faturamento', 'endereco-faturamento', data.endereco_faturamento, true);
+    fillOptional('info-endereco-entrega', 'endereco-entrega', data.endereco_entrega, true);
+    fillOptional('info-observacao2', 'observacao2', data.observacao2, true);
 
     infoBox.classList.remove('hidden');
 }

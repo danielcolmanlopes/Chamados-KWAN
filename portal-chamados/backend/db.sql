@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS chamados (
     produto_data_compra DATE NOT NULL,
     nf_original VARCHAR(255) NOT NULL,
     descricao_problema TEXT NOT NULL,
+    loja VARCHAR(150) DEFAULT NULL,
+    observacao2 TEXT DEFAULT NULL,
+    endereco_faturamento TEXT DEFAULT NULL,
+    endereco_entrega TEXT DEFAULT NULL,
     status VARCHAR(80) NOT NULL DEFAULT 'aberto',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -99,3 +103,9 @@ ALTER TABLE notas_fiscais
     ADD COLUMN IF NOT EXISTS destinatario_cnpj VARCHAR(18) NOT NULL DEFAULT '' AFTER destinatario_nome,
     ADD COLUMN IF NOT EXISTS valor_total DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER destinatario_cnpj,
     ADD UNIQUE KEY IF NOT EXISTS uniq_nf_registro (numero, serie, emitente_cnpj, destinatario_cnpj);
+
+ALTER TABLE chamados
+    ADD COLUMN IF NOT EXISTS loja VARCHAR(150) DEFAULT NULL AFTER descricao_problema,
+    ADD COLUMN IF NOT EXISTS observacao2 TEXT DEFAULT NULL AFTER loja,
+    ADD COLUMN IF NOT EXISTS endereco_faturamento TEXT DEFAULT NULL AFTER observacao2,
+    ADD COLUMN IF NOT EXISTS endereco_entrega TEXT DEFAULT NULL AFTER endereco_faturamento;
