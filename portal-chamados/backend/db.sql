@@ -93,9 +93,9 @@ CREATE TABLE IF NOT EXISTS notas_fiscais_itens (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 ALTER TABLE notas_fiscais
-    ADD COLUMN IF NOT EXISTS emitente_nome VARCHAR(160) NOT NULL AFTER valor_ipi,
-    ADD COLUMN IF NOT EXISTS emitente_cnpj VARCHAR(18) NOT NULL AFTER emitente_nome,
-    ADD COLUMN IF NOT EXISTS destinatario_nome VARCHAR(160) NOT NULL AFTER emitente_cnpj,
-    ADD COLUMN IF NOT EXISTS destinatario_cnpj VARCHAR(18) NOT NULL AFTER destinatario_nome,
-    ADD COLUMN IF NOT EXISTS valor_total DECIMAL(14,2) NOT NULL AFTER destinatario_cnpj,
+    ADD COLUMN IF NOT EXISTS emitente_nome VARCHAR(160) NOT NULL DEFAULT '' AFTER valor_ipi,
+    ADD COLUMN IF NOT EXISTS emitente_cnpj VARCHAR(18) NOT NULL DEFAULT '' AFTER emitente_nome,
+    ADD COLUMN IF NOT EXISTS destinatario_nome VARCHAR(160) NOT NULL DEFAULT '' AFTER emitente_cnpj,
+    ADD COLUMN IF NOT EXISTS destinatario_cnpj VARCHAR(18) NOT NULL DEFAULT '' AFTER destinatario_nome,
+    ADD COLUMN IF NOT EXISTS valor_total DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER destinatario_cnpj,
     ADD UNIQUE KEY IF NOT EXISTS uniq_nf_registro (numero, serie, emitente_cnpj, destinatario_cnpj);
