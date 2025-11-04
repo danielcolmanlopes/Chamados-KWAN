@@ -104,6 +104,38 @@ if ($percentualIcms < 0 || $valorIcms < 0 || $percentualIpi < 0 || $valorIpi < 0
     respond_with_error('Os valores de impostos devem ser positivos.');
 }
 
+if ($emitenteNome === '' || $emitenteDocumento === '') {
+    respond_with_error('Informe os dados completos do emitente.');
+}
+
+if ($destinatarioNome === '' || $destinatarioDocumento === '') {
+    respond_with_error('Informe os dados completos do destinatário.');
+}
+
+if (!preg_match('/^(\d{11}|\d{14})$/', $emitenteDocumento)) {
+    respond_with_error('Documento do emitente inválido.');
+}
+
+if (!preg_match('/^(\d{11}|\d{14})$/', $destinatarioDocumento)) {
+    respond_with_error('Documento do destinatário inválido.');
+}
+
+$numeroPedido = $numeroPedido !== '' ? $numeroPedido : null;
+$numeroSerie = $numeroSerie !== '' ? $numeroSerie : null;
+
+if ($codigoKwan !== '') {
+    if (strpos($codigoKwan, 'KWAN') !== 0) {
+        $codigoKwan = 'KWAN-' . ltrim($codigoKwan, '-');
+    } elseif (strpos($codigoKwan, 'KWAN-') !== 0) {
+        $codigoKwan = 'KWAN-' . substr($codigoKwan, 4);
+    }
+    if ($codigoKwan === 'KWAN-') {
+        $codigoKwan = null;
+    }
+} else {
+    $codigoKwan = null;
+}
+
 $itens = $_POST['itens'] ?? [];
 if (!is_array($itens) || empty($itens)) {
     respond_with_error('Adicione pelo menos um item à nota fiscal.');

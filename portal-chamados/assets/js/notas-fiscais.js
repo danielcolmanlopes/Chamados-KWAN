@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalInput = document.getElementById('valor_total');
     const batchButton = document.getElementById('btn-add-to-batch');
     const exportButton = document.getElementById('btn-export-xml');
+    const exportExcelButton = document.getElementById('btn-export-excel');
     const batchListBody = document.getElementById('batch-list-body');
     const batchEmptyState = document.getElementById('batch-empty-state');
     const batchCounter = document.getElementById('batch-counter');
@@ -349,15 +350,20 @@ document.addEventListener('DOMContentLoaded', () => {
         batchButton.disabled = !(hasRequiredFields && allItemsValid);
     };
 
-    const gatherFormData = () => {
+    const gatherFormData = ({ silent = false } = {}) => {
         const formData = new FormData(form);
         const getValue = (name) => (formData.get(name) ?? '').toString().trim();
+        const respondWithError = (message) => {
+            if (!silent) {
+                showMessage(message, 'error');
+            }
+            return { success: false, error: message };
+        };
 
         const requiredFields = ['numero_nf', 'emitente_nome', 'emitente_cnpj', 'destinatario_nome', 'destinatario_cnpj'];
         const missingField = requiredFields.find((field) => !getValue(field));
         if (missingField) {
-            showMessage('Preencha os campos obrigatórios antes de adicionar ao lote.', 'error');
-            return null;
+            return respondWithError('Preencha os campos obrigatórios antes de adicionar ao lote.');
         }
 
         const itens = [];
@@ -365,7 +371,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const descricao = item.querySelector('[data-name="descricao"]');
             const quantidade = item.querySelector('[data-name="quantidade"]');
             const valorUnitario = item.querySelector('[data-name="valor_unitario"]');
-            if (!(descricao instanceof HTMLInputElement) || !(quantidade instanceof HTMLInputElement) || !(valorUnitario instanceof HTMLInputElement)) {
+            const pedido = item.querySelector('[data-name="pedido"]');
+            if (
+                !(descricao instanceof HTMLInputElement) ||
+                !(quantidade instanceof HTMLInputElement) ||
+                !(valorUnitario instanceof HTMLInputElement)
+            ) {
                 return;
             }
             if (!descricao.value.trim()) {
@@ -380,12 +391,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 descricao: descricao.value.trim(),
                 quantidade: quantidadeValor,
                 valor_unitario: unitarioValor,
+                pedido: pedido instanceof HTMLInputElement ? normalizeOrderValue(pedido.value) || null : null,
             });
         });
 
         if (!itens.length) {
-            showMessage('Adicione ao menos um item válido à nota fiscal.', 'error');
-            return null;
+            return respondWithError('Adicione ao menos um item válido à nota fiscal.');
         }
 
         const total = calculateTotal(formData.get('valor_total'));
@@ -395,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const codigoKwan = normalizeKwanCodeValue(getValue('codigo_kwan'));
         const observacoes = getValue('observacoes');
 
-        return {
+        const invoice = {
             numero_nf: getValue('numero_nf'),
             serie: getValue('serie'),
             data_emissao: getValue('data_emissao'),
@@ -411,10 +422,50 @@ document.addEventListener('DOMContentLoaded', () => {
             destinatario_nome: getValue('destinatario_nome'),
             destinatario_cnpj: destinatarioDocumento,
             destinatario_cnpj_display: toDisplayDocument(destinatarioDocumento) || getValue('destinatario_cnpj'),
+            numero_pedido: numeroPedido,
+            numero_serie: numeroSerie,
+            codigo_kwan: codigoKwan,
             valor_total: Number.isFinite(total) ? Number(total.toFixed(2)) : 0,
             codigo_kwan: codigoKwan,
             observacoes,
             itens,
+        };
+
+        return { success: true, invoice };
+    };
+
+    const tryAddInvoiceToBatch = (invoice, { auto = false } = {}) => {
+        if (!invoice) {
+            return { success: false, message: null, type: 'error' };
+        }
+
+        const exists = invoiceBatch.some(
+            (entry) =>
+                entry.numero_nf === invoice.numero_nf &&
+                entry.emitente_cnpj === invoice.emitente_cnpj &&
+                entry.destinatario_cnpj === invoice.destinatario_cnpj
+        );
+
+        if (exists) {
+            return {
+                success: false,
+                message: 'Esta nota fiscal já foi adicionada ao lote. Remova-a antes de incluir novamente.',
+                type: 'error',
+            };
+        }
+
+        invoiceCounter += 1;
+        const uniqueId = `nf-${String(invoiceCounter).padStart(3, '0')}-${Date.now()}`;
+        invoiceBatch.push({ ...invoice, id: uniqueId });
+        renderBatchTable();
+        checkBatchButton();
+
+        return {
+            success: true,
+            message: auto
+                ? 'Nota fiscal adicionada automaticamente ao lote.'
+                : 'Nota fiscal adicionada ao lote. Você pode incluir outras antes de exportar.',
+            type: auto ? 'info' : 'success',
         };
     };
 
@@ -468,6 +519,50 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
 
+                const extrasCell = document.createElement('td');
+                const extraSegments = [];
+                const itemOrders = Array.isArray(invoice.itens)
+                    ? Array.from(new Set(invoice.itens.map((item) => item?.pedido).filter(Boolean)))
+                    : [];
+                const hasPedido = Boolean(invoice.numero_pedido || itemOrders.length);
+                const hasSerie = Boolean(invoice.numero_serie);
+                const hasKwan = Boolean(invoice.codigo_kwan);
+
+                if (hasPedido) {
+                    if (invoice.numero_pedido) {
+                        extraSegments.push(`<strong>Pedido ${escapeXml(invoice.numero_pedido)}</strong>`);
+                    } else if (itemOrders.length) {
+                        let pedidoLabel = '';
+                        if (itemOrders.length === 1) {
+                            pedidoLabel = itemOrders[0];
+                        } else if (itemOrders.length === 2) {
+                            pedidoLabel = `${itemOrders[0]}, ${itemOrders[1]}`;
+                        } else {
+                            pedidoLabel = `${itemOrders[0]}, ${itemOrders[1]} e +${itemOrders.length - 2}`;
+                        }
+                        extraSegments.push(`<strong>Pedidos ${escapeXml(pedidoLabel)}</strong>`);
+                    }
+                }
+                if (hasSerie) {
+                    extraSegments.push(`<span>Nº de série ${escapeXml(invoice.numero_serie)}</span>`);
+                }
+                if (hasKwan) {
+                    extraSegments.push(`<span>KWAN ${escapeXml(invoice.codigo_kwan)}</span>`);
+                }
+
+                if (!hasPedido && !hasSerie && !hasKwan) {
+                    extraSegments.push('<span class="muted">Nenhum dado complementar informado</span>');
+                    extraSegments.push('<span class="muted">Solicitar número de série ao emitente</span>');
+                } else if (!hasSerie) {
+                    extraSegments.push('<span class="muted">Solicitar número de série ao emitente</span>');
+                }
+
+                extrasCell.innerHTML = `
+                    <div class="batch-extra">
+                        ${extraSegments.join('')}
+                    </div>
+                `;
+
                 const valorCell = document.createElement('td');
                 valorCell.className = 'batch-value';
                 valorCell.textContent = toDisplayCurrency(invoice.valor_total) || 'R$ 0,00';
@@ -480,18 +575,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 removeButton.textContent = 'Remover';
                 actionsCell.append(removeButton);
 
-                row.append(nfCell, emitenteCell, destinatarioCell, valorCell, actionsCell);
+                row.append(nfCell, emitenteCell, destinatarioCell, extrasCell, valorCell, actionsCell);
                 batchListBody.append(row);
             });
         }
 
         if (batchCounter) {
             const count = invoiceBatch.length;
-            batchCounter.textContent = count === 1 ? '1 nota' : `${count} notas`;
+            const totalValue = invoiceBatch.reduce((accumulator, invoice) => {
+                const value = Number.isFinite(invoice.valor_total) ? invoice.valor_total : 0;
+                return accumulator + value;
+            }, 0);
+            const countLabel = count === 1 ? '1 nota' : `${count} notas`;
+            batchCounter.textContent = totalValue > 0 ? `${countLabel} • ${toDisplayCurrency(totalValue)}` : countLabel;
         }
 
         if (exportButton) {
             exportButton.disabled = invoiceBatch.length === 0;
+        }
+        if (exportExcelButton) {
+            exportExcelButton.disabled = invoiceBatch.length === 0;
         }
     };
 
@@ -518,6 +621,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (invoice.transportadora) {
                 xmlLines.push(`      <transportadora>${escapeXml(invoice.transportadora)}</transportadora>`);
+            }
+            if (invoice.numero_pedido) {
+                xmlLines.push(`      <pedido>${escapeXml(invoice.numero_pedido)}</pedido>`);
+            }
+            if (invoice.numero_serie) {
+                xmlLines.push(`      <numeroSerie>${escapeXml(invoice.numero_serie)}</numeroSerie>`);
+            }
+            if (invoice.codigo_kwan) {
+                xmlLines.push(`      <codigoKwan>${escapeXml(invoice.codigo_kwan)}</codigoKwan>`);
             }
             xmlLines.push('    </identificacao>');
 
@@ -558,6 +670,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 xmlLines.push(`        <quantidade>${formatNumberForXml(item.quantidade)}</quantidade>`);
                 xmlLines.push(`        <valorUnitario>${formatNumberForXml(item.valor_unitario)}</valorUnitario>`);
                 xmlLines.push(`        <valorTotal>${formatNumberForXml(itemTotal)}</valorTotal>`);
+                if (item.pedido) {
+                    xmlLines.push(`        <pedidoItem>${escapeXml(item.pedido)}</pedidoItem>`);
+                }
                 xmlLines.push('      </item>');
             });
             xmlLines.push('    </itens>');
@@ -594,6 +709,157 @@ document.addEventListener('DOMContentLoaded', () => {
         showMessage('Lote exportado com sucesso em XML.', 'success');
     };
 
+    const exportBatchToExcel = () => {
+        if (!invoiceBatch.length) {
+            showMessage('Adicione ao menos uma nota ao lote antes de exportar.', 'error');
+            return;
+        }
+
+        const buildExcelCell = (value, { styleId = null } = {}) => {
+            const cellValue = value === null || value === undefined ? '' : value;
+            const type = typeof cellValue === 'number' && Number.isFinite(cellValue) ? 'Number' : 'String';
+            const normalizedValue =
+                type === 'Number' ? String(Number(cellValue)) : String(cellValue);
+            const styleAttr = styleId ? ` ss:StyleID="${styleId}"` : '';
+            return `<Cell${styleAttr}><Data ss:Type="${type}">${escapeXml(normalizedValue)}</Data></Cell>`;
+        };
+
+        const buildWorksheet = (name, headers, rows) => {
+            const headerRow = `<Row>${headers
+                .map((header) => buildExcelCell(header, { styleId: 'Header' }))
+                .join('')}</Row>`;
+            const dataRows = rows
+                .map((row) => `<Row>${row.map((cell) => buildExcelCell(cell)).join('')}</Row>`)
+                .join('');
+            return `<Worksheet ss:Name="${escapeXml(name)}"><Table>${headerRow}${dataRows}</Table></Worksheet>`;
+        };
+
+        const createWorkbook = (worksheets) => {
+            const header =
+                '<?xml version="1.0" encoding="UTF-8"?>' +
+                '<?mso-application progid="Excel.Sheet"?>' +
+                '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">' +
+                '<Styles><Style ss:ID="Header"><Font ss:Bold="1"/></Style></Styles>';
+            const sheets = worksheets.map(({ name, headers, rows }) => buildWorksheet(name, headers, rows)).join('');
+            return `${header}${sheets}</Workbook>`;
+        };
+
+        const summaryHeaders = [
+            'Número NF',
+            'Série',
+            'Data emissão',
+            'Estado emissor',
+            'Pedido (nota)',
+            'Número de série',
+            'Código KWAN',
+            'Emitente',
+            'Documento emitente',
+            'Destinatário',
+            'Documento destinatário',
+            'Transportadora',
+            'Valor total (R$)',
+        ];
+
+        const summaryRows = invoiceBatch.map((invoice) => [
+            invoice.numero_nf || '',
+            invoice.serie || '',
+            invoice.data_emissao || '',
+            invoice.estado_emissor || '',
+            invoice.numero_pedido || '',
+            invoice.numero_serie || '',
+            invoice.codigo_kwan || '',
+            invoice.emitente_nome || '',
+            invoice.emitente_cnpj_display || invoice.emitente_cnpj || '',
+            invoice.destinatario_nome || '',
+            invoice.destinatario_cnpj_display || invoice.destinatario_cnpj || '',
+            invoice.transportadora || '',
+            Number.isFinite(invoice.valor_total) ? Number(invoice.valor_total.toFixed(2)) : '',
+        ]);
+
+        const itemsHeaders = [
+            'Número NF',
+            'Item',
+            'Descrição',
+            'Quantidade',
+            'Valor unitário (R$)',
+            'Valor total (R$)',
+            'Pedido da nota',
+            'Pedido do item (xPed)',
+            'Número de série',
+            'Código KWAN',
+            'Emitente',
+            'Destinatário',
+        ];
+
+        const itemRows = invoiceBatch
+            .map((invoice) => {
+                const pedidoNota = invoice.numero_pedido || '';
+                const numeroSerie = invoice.numero_serie || '';
+                const codigoKwan = invoice.codigo_kwan || '';
+                return invoice.itens.map((item, index) => {
+                    const quantidadeRaw =
+                        typeof item.quantidade === 'number' && Number.isFinite(item.quantidade)
+                            ? item.quantidade
+                            : parseDecimal(item.quantidade);
+                    const quantidade = Number.isFinite(quantidadeRaw)
+                        ? Number(quantidadeRaw.toFixed(3))
+                        : '';
+                    const valorUnitarioRaw =
+                        typeof item.valor_unitario === 'number' && Number.isFinite(item.valor_unitario)
+                            ? item.valor_unitario
+                            : parseDecimal(item.valor_unitario);
+                    const valorUnitario = Number.isFinite(valorUnitarioRaw)
+                        ? Number(valorUnitarioRaw.toFixed(2))
+                        : '';
+                    const totalLinha =
+                        Number.isFinite(quantidadeRaw) && Number.isFinite(valorUnitarioRaw)
+                            ? Number((quantidadeRaw * valorUnitarioRaw).toFixed(2))
+                            : '';
+                    return [
+                        invoice.numero_nf || '',
+                        index + 1,
+                        item.descricao || '',
+                        quantidade,
+                        valorUnitario,
+                        totalLinha,
+                        pedidoNota,
+                        item.pedido || '',
+                        numeroSerie,
+                        codigoKwan,
+                        invoice.emitente_nome || '',
+                        invoice.destinatario_nome || '',
+                    ];
+                });
+            })
+            .flat();
+
+        const workbookXml = createWorkbook([
+            {
+                name: 'Notas',
+                headers: summaryHeaders,
+                rows: summaryRows,
+            },
+            {
+                name: 'Itens',
+                headers: itemsHeaders,
+                rows: itemRows,
+            },
+        ]);
+
+        const blob = new Blob([workbookXml], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `notas-fiscais-lote-${timestamp}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showMessage('Lote exportado com sucesso em Excel.', 'success');
+    };
+
     const normalizeExtractedData = (data) => {
         const fields = {
             numero_nf: (data?.numero_nf ?? '').toString().trim(),
@@ -617,6 +883,15 @@ document.addEventListener('DOMContentLoaded', () => {
                       descricao: (item?.descricao ?? '').toString().trim(),
                       quantidade: formatDecimal(item?.quantidade ?? item?.qtd ?? '', 3),
                       valor_unitario: formatDecimal(item?.valor_unitario ?? item?.valorUnitario ?? '', 2),
+                      pedido: normalizeOrderValue(
+                          item?.pedido ??
+                              item?.xPed ??
+                              item?.xpEd ??
+                              item?.numeroPedido ??
+                              item?.numero_pedido ??
+                              item?.itemPedido ??
+                              ''
+                      ),
                   }))
                 : [],
         };
@@ -655,6 +930,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const itemsDisplay = fields.itens.map((item) => ({
             descricao: item.descricao,
+            pedido: item.pedido || '',
             quantidade: item.quantidade !== null ? toDisplayQuantity(item.quantidade) : '',
             valor_unitario: item.valor_unitario !== null ? toDisplayCurrency(item.valor_unitario) : '',
         }));
@@ -679,7 +955,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 fields.itens.length
         );
 
-        return { fields, display, itemsDisplay, hasData };
+        const needsSerial = !fields.numero_serie;
+
+        return { fields, display, itemsDisplay, hasData, needsSerial };
     };
 
     const parseInvoiceText = (text) => {
@@ -865,7 +1143,46 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('Estrutura da NF-e não encontrada no XML enviado.');
         }
 
-        const getText = (selector, context = infNFe) => context?.querySelector(selector)?.textContent?.trim() ?? '';
+        const selectNode = (selector, context = infNFe) => {
+            if (!context) {
+                return null;
+            }
+            try {
+                const direct = context.querySelector(selector);
+                if (direct) {
+                    return direct;
+                }
+            } catch (error) {
+                // Ignora falhas de seletor quando o XML utiliza namespaces padrão
+            }
+            const parts = selector
+                .split('>')
+                .map((part) => part.trim())
+                .filter(Boolean);
+            let current = context;
+            for (const part of parts) {
+                if (!current) {
+                    return null;
+                }
+                const localName = part.replace(/^[^:]*:/, '').toLowerCase();
+                current = Array.from(current.children).find(
+                    (child) => child.localName && child.localName.toLowerCase() === localName
+                );
+            }
+            return current || null;
+        };
+
+        const getText = (selector, context = infNFe) => selectNode(selector, context)?.textContent?.trim() ?? '';
+
+        const getNodesByLocalName = (context, localName) => {
+            if (!context) {
+                return [];
+            }
+            const desired = localName.toLowerCase();
+            return Array.from(context.getElementsByTagName('*')).filter(
+                (node) => node.localName && node.localName.toLowerCase() === desired
+            );
+        };
 
         const data = {
             numero_nf: getText('ide > nNF'),
@@ -885,34 +1202,50 @@ document.addEventListener('DOMContentLoaded', () => {
             itens: [],
         };
 
-        const firstDet = infNFe.querySelector('det');
+        const detNodes = getNodesByLocalName(infNFe, 'det');
+        const firstDet = detNodes[0] ?? null;
         if (firstDet) {
-            const icmsRoot = firstDet.querySelector('imposto > ICMS');
+            const icmsRoot = selectNode('imposto > ICMS', firstDet);
             if (icmsRoot) {
                 const icmsChild = Array.from(icmsRoot.children)[0];
                 if (icmsChild) {
                     data.percentual_icms = getText('pICMS', icmsChild);
                 }
             }
-            const ipiRoot = firstDet.querySelector('imposto > IPI');
+            const ipiRoot = selectNode('imposto > IPI', firstDet);
             if (ipiRoot) {
-                const ipiNode = ipiRoot.querySelector('IPITrib') || ipiRoot.querySelector('IPINT') || ipiRoot;
+                const ipiNode =
+                    selectNode('IPITrib', ipiRoot) || selectNode('IPINT', ipiRoot) || ipiRoot;
                 data.percentual_ipi = getText('pIPI', ipiNode);
                 if (!data.valor_ipi) {
                     data.valor_ipi = getText('vIPI', ipiNode);
                 }
             }
+            if (!data.numero_pedido) {
+                data.numero_pedido = getText('prod > xPed', firstDet) || getText('prod > nItemPed', firstDet);
+            }
+            if (!data.numero_serie) {
+                data.numero_serie = getText('prod > nSerie', firstDet) || getText('prod > nSerieFab', firstDet);
+            }
+            if (!data.codigo_kwan) {
+                const prodCode = getText('prod > cProd', firstDet);
+                if (/kwan/i.test(prodCode)) {
+                    data.codigo_kwan = prodCode;
+                }
+            }
         }
 
-        infNFe.querySelectorAll('det').forEach((det) => {
+        detNodes.forEach((det) => {
             const descricao = getText('prod > xProd', det);
             const quantidade = getText('prod > qCom', det);
             const valorUnitario = getText('prod > vUnCom', det);
+            const pedidoItem = getText('prod > xPed', det) || getText('prod > nItemPed', det);
             if (descricao) {
                 data.itens.push({
                     descricao,
                     quantidade,
                     valor_unitario: valorUnitario,
+                    pedido: pedidoItem,
                 });
             }
         });
@@ -948,7 +1281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderOcrResults = (normalized, raw) => {
-        const { display, itemsDisplay, hasData } = normalized;
+        const { display, itemsDisplay, hasData, needsSerial } = normalized;
 
         if (badgesList) {
             badgesList.innerHTML = '';
@@ -998,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!itemsDisplay.length) {
                 const emptyRow = document.createElement('tr');
                 const cell = document.createElement('td');
-                cell.colSpan = 3;
+                cell.colSpan = 4;
                 cell.className = 'muted';
                 cell.textContent = 'Nenhum item identificado automaticamente.';
                 emptyRow.append(cell);
@@ -1008,11 +1341,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const row = document.createElement('tr');
                     const descricao = document.createElement('td');
                     descricao.textContent = item.descricao;
+                    const pedido = document.createElement('td');
+                    pedido.textContent = item.pedido || '-';
                     const qtd = document.createElement('td');
                     qtd.textContent = item.quantidade;
                     const valor = document.createElement('td');
                     valor.textContent = item.valor_unitario;
-                    row.append(descricao, qtd, valor);
+                    row.append(descricao, pedido, qtd, valor);
                     ocrItemsBody.append(row);
                 });
             }
@@ -1159,9 +1494,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const descricaoInput = newItem.querySelector('[data-name="descricao"]');
             const quantidadeInput = newItem.querySelector('[data-name="quantidade"]');
             const valorUnitarioInput = newItem.querySelector('[data-name="valor_unitario"]');
+            const pedidoInput = newItem.querySelector('[data-name="pedido"]');
 
             if (descricaoInput) {
                 descricaoInput.value = itemData.descricao ?? '';
+            }
+            if (pedidoInput) {
+                pedidoInput.value = itemData.pedido ?? '';
             }
             if (quantidadeInput) {
                 quantidadeInput.value = itemData.quantidade ?? '';
@@ -1217,6 +1556,7 @@ document.addEventListener('DOMContentLoaded', () => {
             extractedData.itens.forEach((item) => {
                 addItem({
                     descricao: item.descricao,
+                    pedido: item.pedido ?? '',
                     quantidade: item.quantidade ?? '',
                     valor_unitario: item.valor_unitario ?? '',
                 });
@@ -1227,7 +1567,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         calculateTotal(extractedData.valor_total ?? null);
         checkBatchButton();
-        showMessage('Campos preenchidos com os dados importados. Revise antes de salvar.', 'success');
+
+        const serialField = form.elements.namedItem('numero_serie');
+        const serialValue = serialField instanceof HTMLInputElement ? serialField.value.trim() : '';
+        const gatherResult = gatherFormData({ silent: true });
+
+        const messageParts = ['Campos preenchidos com os dados importados. Revise antes de salvar.'];
+        let messageType = 'success';
+
+        if (!serialValue) {
+            messageParts.push('Número de série não identificado. Solicite ao emitente.');
+            messageType = 'warning';
+        }
+
+        if (gatherResult.success) {
+            const batchOutcome = tryAddInvoiceToBatch(gatherResult.invoice, { auto: true });
+            if (batchOutcome.success) {
+                messageParts.push('Nota fiscal adicionada automaticamente ao lote.');
+                if (!serialValue) {
+                    messageType = 'warning';
+                }
+            } else if (batchOutcome.message) {
+                messageParts.push(batchOutcome.message);
+                if (batchOutcome.type) {
+                    messageType = batchOutcome.type;
+                }
+            }
+        } else if (gatherResult.error) {
+            messageParts.push(gatherResult.error);
+            messageType = 'error';
+        }
+
+        showMessage(messageParts.join(' '), messageType);
     };
 
     addButton.addEventListener('click', () => {
@@ -1309,25 +1680,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (batchButton) {
         batchButton.addEventListener('click', () => {
-            const invoice = gatherFormData();
-            if (!invoice) {
+            const result = gatherFormData();
+            if (!result.success) {
                 return;
             }
-            const exists = invoiceBatch.some(
-                (entry) =>
-                    entry.numero_nf === invoice.numero_nf && entry.emitente_cnpj === invoice.emitente_cnpj && entry.destinatario_cnpj === invoice.destinatario_cnpj
-            );
-            if (exists) {
-                showMessage('Esta nota fiscal já foi adicionada ao lote. Remova-a antes de incluir novamente.', 'error');
-                return;
+            const outcome = tryAddInvoiceToBatch(result.invoice, { auto: false });
+            if (outcome.message) {
+                showMessage(outcome.message, outcome.type);
             }
-
-            invoiceCounter += 1;
-            const uniqueId = `nf-${String(invoiceCounter).padStart(3, '0')}-${Date.now()}`;
-            invoiceBatch.push({ ...invoice, id: uniqueId });
-            renderBatchTable();
-            checkBatchButton();
-            showMessage('Nota fiscal adicionada ao lote. Você pode incluir outras antes de exportar.', 'success');
         });
     }
 
@@ -1356,6 +1716,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (exportButton) {
         exportButton.addEventListener('click', () => {
             exportBatchToXml();
+        });
+    }
+
+    if (exportExcelButton) {
+        exportExcelButton.addEventListener('click', () => {
+            exportBatchToExcel();
         });
     }
 
