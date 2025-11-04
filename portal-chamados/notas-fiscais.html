@@ -149,6 +149,30 @@
                 </div>
             </fieldset>
 
+            <fieldset class="participants">
+                <legend>Participantes da operação</legend>
+                <div class="grid two">
+                    <div class="participant-card">
+                        <h3>Emitente</h3>
+                        <label>Razão social / Nome completo
+                            <input type="text" name="emitente_nome" required maxlength="160" autocomplete="off" placeholder="Quem emitiu a nota?">
+                        </label>
+                        <label>CNPJ / CPF
+                            <input type="text" name="emitente_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
+                        </label>
+                    </div>
+                    <div class="participant-card">
+                        <h3>Destinatário</h3>
+                        <label>Razão social / Nome completo
+                            <input type="text" name="destinatario_nome" required maxlength="160" autocomplete="off" placeholder="Para quem a nota foi emitida?">
+                        </label>
+                        <label>CNPJ / CPF
+                            <input type="text" name="destinatario_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+
             <fieldset>
                 <legend>Dados complementares</legend>
                 <div class="grid three">
