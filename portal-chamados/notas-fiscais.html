@@ -42,7 +42,7 @@
                     <h2 id="ocr-title">Importar nota fiscal automaticamente</h2>
                     <p class="caption">Arraste o arquivo para a área destacada ou clique para selecionar.</p>
                 </div>
-                <button type="button" id="btn-apply-ocr" class="btn secondary" disabled>Aplicar dados extraídos</button>
+                <button type="button" id="btn-apply-ocr" class="btn secondary" data-apply-ocr disabled>Aplicar dados extraídos</button>
             </div>
 
             <label class="ocr-dropzone" id="nf-dropzone">
@@ -66,6 +66,7 @@
                             <thead>
                                 <tr>
                                     <th>Descrição</th>
+                                    <th>Pedido (xPed)</th>
                                     <th>Qtd.</th>
                                     <th>Vlr. unit.</th>
                                 </tr>
@@ -85,6 +86,18 @@
         <h1>Registrar nota fiscal de entrada</h1>
         <p>Cadastre as informações fiscais e detalhe todos os itens presentes na nota.</p>
         <div id="nf-msg" class="alert hidden"></div>
+
+        <section class="form-quick-actions" aria-label="Ações rápidas de preenchimento">
+            <div>
+                <h2>Preenchimento rápido</h2>
+                <p class="caption">Use os dados extraídos automaticamente ou adicione a nota atual ao lote de exportação.</p>
+            </div>
+            <div class="quick-buttons">
+                <button type="button" id="btn-apply-ocr-form" class="btn secondary" data-apply-ocr disabled>Aplicar dados extraídos</button>
+                <button type="button" id="btn-add-to-batch" class="btn outline" disabled>Adicionar ao lote</button>
+            </div>
+        </section>
+
         <form id="form-nota">
             <fieldset>
                 <legend>Dados da nota fiscal</legend>
@@ -137,6 +150,45 @@
             </fieldset>
 
             <fieldset>
+                <legend>Dados complementares</legend>
+                <div class="grid three">
+                    <label>Número do pedido
+                        <input type="text" name="numero_pedido" maxlength="60" autocomplete="off" placeholder="Informe o número do pedido, se houver.">
+                    </label>
+                    <label>Número de série
+                        <input type="text" name="numero_serie" maxlength="120" autocomplete="off" placeholder="Solicite ao emitente caso não conste na nota.">
+                    </label>
+                    <label>Código KWAN
+                        <input type="text" name="codigo_kwan" maxlength="60" autocomplete="off" placeholder="Ex.: KWAN-1234">
+                    </label>
+                </div>
+            </fieldset>
+
+            <fieldset class="participants">
+                <legend>Participantes da operação</legend>
+                <div class="grid two">
+                    <div class="participant-card">
+                        <h3>Emitente</h3>
+                        <label>Razão social / Nome completo
+                            <input type="text" name="emitente_nome" required maxlength="160" autocomplete="off" placeholder="Quem emitiu a nota?">
+                        </label>
+                        <label>CNPJ / CPF
+                            <input type="text" name="emitente_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
+                        </label>
+                    </div>
+                    <div class="participant-card">
+                        <h3>Destinatário</h3>
+                        <label>Razão social / Nome completo
+                            <input type="text" name="destinatario_nome" required maxlength="160" autocomplete="off" placeholder="Para quem a nota foi emitida?">
+                        </label>
+                        <label>CNPJ / CPF
+                            <input type="text" name="destinatario_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
                 <legend>Tributos</legend>
                 <div class="grid two tributos-grid">
                     <label>% ICMS
@@ -159,6 +211,11 @@
                 <p class="caption">Adicione todos os itens presentes na NF. Informe descrição, quantidade e valor unitário.</p>
                 <div id="itens-container" class="nf-items"></div>
                 <button type="button" id="add-item" class="btn outline">Adicionar item</button>
+                <div class="nf-total-bar" role="status" aria-live="polite">
+                    <span>Total estimado da NF</span>
+                    <strong id="nf-total-display">R$ 0,00</strong>
+                </div>
+                <input type="hidden" name="valor_total" id="valor_total" value="">
             </fieldset>
 
             <div class="form-actions">
@@ -166,6 +223,39 @@
                 <a href="index.html" class="btn outline">Cancelar</a>
             </div>
         </form>
+
+        <section class="batch-panel" aria-labelledby="batch-title">
+            <div class="batch-header">
+                <div>
+                    <h2 id="batch-title">Lote de notas para exportação</h2>
+                    <p class="caption">Combine várias notas fiscais e gere um único arquivo XML sempre que precisar.</p>
+                </div>
+                <div class="batch-actions">
+                    <span id="batch-counter" class="badge">0 notas</span>
+                    <button type="button" id="btn-export-excel" class="btn outline" disabled>Exportar lote em Excel</button>
+                    <button type="button" id="btn-export-xml" class="btn primary" disabled>Exportar lote em XML</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="batch-table">
+                    <thead>
+                        <tr>
+                            <th>NF</th>
+                            <th>Emitente</th>
+                            <th>Destinatário</th>
+                            <th>Pedido / Série / KWAN</th>
+                            <th>Valor total</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batch-list-body">
+                        <tr id="batch-empty-state">
+                            <td colspan="6" class="muted">Nenhuma nota foi adicionada ao lote ainda.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 </main>
 
@@ -182,14 +272,17 @@
             <label>Descrição do item
                 <input type="text" data-name="descricao" required maxlength="200" autocomplete="off">
             </label>
-            <div class="grid two compact">
-                <label>Quantidade
-                    <input type="number" data-name="quantidade" min="0" step="0.01" placeholder="0" required>
-                </label>
-                <label>Valor unitário (R$)
-                    <input type="number" data-name="valor_unitario" min="0" step="0.01" placeholder="0,00" required>
-                </label>
-            </div>
+            <label>Pedido (xPed)
+                <input type="text" data-name="pedido" maxlength="80" autocomplete="off" placeholder="Número do pedido referenciado">
+            </label>
+        </div>
+        <div class="grid two compact">
+            <label>Quantidade
+                <input type="number" data-name="quantidade" min="0" step="0.01" placeholder="0" required>
+            </label>
+            <label>Valor unitário (R$)
+                <input type="number" data-name="valor_unitario" min="0" step="0.01" placeholder="0,00" required>
+            </label>
         </div>
         <button type="button" class="btn-text remove-item">Remover</button>
     </div>

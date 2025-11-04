@@ -70,6 +70,14 @@ CREATE TABLE IF NOT EXISTS notas_fiscais (
     valor_icms DECIMAL(14,2) NOT NULL,
     percentual_ipi DECIMAL(7,4) NOT NULL,
     valor_ipi DECIMAL(14,2) NOT NULL,
+    emitente_nome VARCHAR(160) NOT NULL,
+    emitente_documento VARCHAR(18) NOT NULL,
+    destinatario_nome VARCHAR(160) NOT NULL,
+    destinatario_documento VARCHAR(18) NOT NULL,
+    numero_pedido VARCHAR(60) DEFAULT NULL,
+    numero_serie VARCHAR(120) DEFAULT NULL,
+    codigo_kwan VARCHAR(60) DEFAULT NULL,
+    valor_total DECIMAL(14,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
