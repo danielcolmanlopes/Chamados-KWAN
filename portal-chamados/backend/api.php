@@ -2,7 +2,6 @@
 header('Content-Type: application/json');
 require __DIR__ . '/config.php';
 
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
@@ -38,9 +37,19 @@ if (!$result || empty($result['success'])) {
     exit;
 }
 
-$requiredFields = ['cliente_nome','cliente_email','cliente_telefone','cliente_cnpj','produto_marca','produto_modelo','produto_serial','produto_data_compra','descricao_problema'];
-$data = [];
+$requiredFields = [
+    'cliente_nome',
+    'cliente_email',
+    'cliente_telefone',
+    'cliente_cnpj',
+    'produto_marca',
+    'produto_modelo',
+    'produto_serial',
+    'produto_data_compra',
+    'descricao_problema'
+];
 
+$data = [];
 foreach ($requiredFields as $field) {
     $value = sanitize_text($_POST[$field] ?? '');
     if ($value === '') {
@@ -99,6 +108,7 @@ $nfRelative = 'uploads/' . $nfFilename;
 
 $stmt = $mysqli->prepare("INSERT INTO chamados (codigo, cliente_nome, cliente_email, cliente_telefone, cliente_cnpj, produto_marca, produto_modelo, produto_serial, produto_data_compra, nf_original, descricao_problema, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aberto')");
 if (!$stmt) {
+    unlink($nfPath);
     echo json_encode(['success' => false, 'message' => 'Erro ao preparar inserção do chamado.']);
     exit;
 }
@@ -127,7 +137,7 @@ if (!$stmt->execute()) {
 $chamadoId = $stmt->insert_id;
 $stmt->close();
 
-$eventoStmt = $mysqli->prepare("INSERT INTO eventos_chamado (chamado_id, codigo, status, observacao, criado_por) VALUES (?, ?, ?, ?, ?)");
+$eventoStmt = $mysqli->prepare('INSERT INTO eventos_chamado (chamado_id, codigo, status, observacao, criado_por) VALUES (?, ?, ?, ?, ?)');
 if ($eventoStmt) {
     $status = 'aberto';
     $observacao = 'Chamado registrado pelo cliente.';
@@ -137,7 +147,7 @@ if ($eventoStmt) {
     $eventoStmt->close();
 }
 
-$anexoStmt = $mysqli->prepare("INSERT INTO anexos_chamado (chamado_id, codigo, tipo, arquivo_nome, arquivo_caminho) VALUES (?, ?, ?, ?, ?)");
+$anexoStmt = $mysqli->prepare('INSERT INTO anexos_chamado (chamado_id, codigo, tipo, arquivo_nome, arquivo_caminho) VALUES (?, ?, ?, ?, ?)');
 if ($anexoStmt) {
     $tipo = 'Nota fiscal de compra';
     $originalName = basename($nfFile['name']);
@@ -164,7 +174,7 @@ if (!empty($_FILES['midia']['name'][0])) {
         $path = $uploadDir . DIRECTORY_SEPARATOR . $filename;
         if (move_uploaded_file($files['tmp_name'][$i], $path)) {
             $relative = 'uploads/' . $filename;
-            $insertAnexo = $mysqli->prepare("INSERT INTO anexos_chamado (chamado_id, codigo, tipo, arquivo_nome, arquivo_caminho) VALUES (?, ?, ?, ?, ?)");
+            $insertAnexo = $mysqli->prepare('INSERT INTO anexos_chamado (chamado_id, codigo, tipo, arquivo_nome, arquivo_caminho) VALUES (?, ?, ?, ?, ?)');
             if ($insertAnexo) {
                 $tipo = 'Mídia adicional';
                 $original = basename($files['name'][$i]);
@@ -177,39 +187,3 @@ if (!empty($_FILES['midia']['name'][0])) {
 }
 
 echo json_encode(['success' => true, 'codigo' => $codigo]);
-=======
-// Gera código público
-$codigo = "KWAN-" . strtoupper(substr(md5(uniqid('',true)),0,8));
-
-// Upload NF compra
-$uploadDir = __DIR__ . "/../uploads/";
-if(!file_exists($uploadDir)) @mkdir($uploadDir,0755,true);
-$nfPath = "";
-if(isset($_FILES['nf_compra']) && is_uploaded_file($_FILES['nf_compra']['tmp_name'])){
-  $ext = strtolower(pathinfo($_FILES['nf_compra']['name'], PATHINFO_EXTENSION));
-  if(!in_array($ext,['pdf','xml'])){ echo json_encode(["success"=>false,"message"=>"NF: apenas PDF ou XML."]); exit; }
-  $nomeArquivo = $codigo . "_nfcompra." . $ext;
-  $dest = $uploadDir . $nomeArquivo;
-  if(!move_uploaded_file($_FILES['nf_compra']['tmp_name'], $dest)){
-    echo json_encode(["success"=>false,"message"=>"Falha no upload da NF."]); exit;
-  }
-  $nfPath = "uploads/" . $nomeArquivo;
-}
-
-// Insert
-$sql = "INSERT INTO chamados 
-(codigo_publico,status,cliente_nome,cliente_email,cliente_telefone,cliente_cnpj,marca,modelo,serial,data_compra,nf_compra,descricao_problema) 
-VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
-$stmt = $conn->prepare($sql);
-$status = 'aberto';
-$stmt->bind_param("ssssssssssss",
-  $codigo, $status,
-  $_POST['cliente_nome'], $_POST['cliente_email'], $_POST['cliente_telefone'], $_POST['cliente_cnpj'],
-  $_POST['marca'], $_POST['modelo'], $_POST['serial'], $_POST['data_compra'], $nfPath, $_POST['descricao_problema']
-);
-if($stmt->execute()){
-  echo json_encode(["success"=>true,"codigo"=>$codigo]);
-} else {
-  echo json_encode(["success"=>false,"message"=>"Erro ao salvar"]);
-}
-

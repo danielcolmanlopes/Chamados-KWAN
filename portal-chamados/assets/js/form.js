@@ -2,9 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('form-chamado');
     const msgBox = document.getElementById('msg');
 
+    const basePath = window.PORTAL_BASE_PATH || (window.location.pathname.includes('/portal-chamados/') ? '' : 'portal-chamados/');
+    const apiUrl = `${basePath}backend/api.php`;
+    const usePhpRoutes = basePath !== '';
+    const acompanharPage = usePhpRoutes ? 'acompanhar.php' : 'acompanhar.html';
+
     const showMessage = (message, type = 'success') => {
         msgBox.className = `alert ${type}`;
-        msgBox.textContent = message;
+        msgBox.innerHTML = message;
         msgBox.classList.remove('hidden');
         msgBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
@@ -20,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(form);
 
         try {
-            const response = await fetch('backend/api.php', {
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 body: formData
             });
@@ -35,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 grecaptcha.reset();
             }
 
-            const link = `acompanhar.html?c=${encodeURIComponent(data.codigo)}`;
+            const link = `${acompanharPage}?c=${encodeURIComponent(data.codigo)}`;
             showMessage(`Chamado registrado com sucesso! Código: ${data.codigo}. <a href="${link}">Clique aqui para acompanhar</a>.`, 'success');
         } catch (error) {
             console.error(error);
