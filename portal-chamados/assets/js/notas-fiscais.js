@@ -1719,6 +1719,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (dropzone && fileInput) {
+        // Evita que o navegador abra o arquivo quando o usuário solta fora da área válida
+        const preventDefaultDropBehaviour = (event) => {
+            event.preventDefault();
+        };
+
+        document.addEventListener('dragover', preventDefaultDropBehaviour);
+        document.addEventListener('drop', preventDefaultDropBehaviour);
+
         dropzone.addEventListener('click', () => {
             fileInput.click();
         });
@@ -1743,10 +1751,17 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             const files = event.dataTransfer?.files;
             if (files && files.length) {
-                const dt = new DataTransfer();
-                dt.items.add(files[0]);
-                fileInput.files = dt.files;
-                handleFileSelection(files[0]);
+                const [file] = files;
+                try {
+                    if (typeof DataTransfer !== 'undefined') {
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        fileInput.files = dt.files;
+                    }
+                } catch (error) {
+                    console.warn('Falha ao sincronizar o campo de arquivo via DataTransfer.', error);
+                }
+                handleFileSelection(file);
             }
         });
 
