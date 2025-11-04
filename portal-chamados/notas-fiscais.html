@@ -45,7 +45,7 @@
                 <button type="button" id="btn-apply-ocr" class="btn secondary" data-apply-ocr disabled>Aplicar dados extraídos</button>
             </div>
 
-            <label class="ocr-dropzone" id="nf-dropzone">
+            <label class="ocr-dropzone" id="nf-dropzone" for="nf-file" role="button" tabindex="0">
                 <input type="file" id="nf-file" accept=".pdf,.xml,.jpg,.jpeg,.png" hidden>
                 <span class="ocr-icon" aria-hidden="true">📄</span>
                 <p><strong>Arraste e solte</strong> ou clique para enviar a nota fiscal</p>
@@ -283,7 +283,7 @@
     </div>
 </template>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js" integrity="sha384-nYb3VINeodIZ6Tn6PvxI6Bfq5lHppZArYrusS4x+h0/pk3jfbQfVIAtF+wNCz7Ys" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js" integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb" crossorigin="anonymous"></script>
 <script src="assets/js/notas-fiscais.js"></script>
 <script>
     document.getElementById('ano').textContent = new Date().getFullYear();

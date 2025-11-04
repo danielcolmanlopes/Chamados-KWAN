@@ -109,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setStatus('Nenhum arquivo enviado.', 'idle');
 
-    const resetOcr = () => {
+    const resetOcr = (options = {}) => {
+        const { restoreLabel = true } = options;
         extractedData = null;
         rawText = '';
         if (badgesList) {
@@ -128,6 +129,12 @@ document.addEventListener('DOMContentLoaded', () => {
             rawDetails.classList.add('hidden');
         }
         setApplyButtonsState(false);
+        if (restoreLabel) {
+            const label = dropzone?.querySelector('p strong');
+            if (label) {
+                label.textContent = 'Arraste e solte';
+            }
+        }
     };
 
     const parseDecimal = (value) => {
@@ -1504,7 +1511,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        resetOcr();
+        resetOcr({ restoreLabel: false });
         setStatus('Processando arquivo, aguarde...', 'loading');
 
         try {
@@ -1718,17 +1725,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const announceSelectedFile = (file) => {
+        if (!file) {
+            return;
+        }
+        const label = dropzone?.querySelector('p strong');
+        if (label) {
+            label.textContent = file.name;
+        }
+        setStatus(`Arquivo selecionado: ${file.name}.`, 'loading');
+    };
+
     if (dropzone && fileInput) {
         // Evita que o navegador abra o arquivo quando o usuário solta fora da área válida
         const preventDefaultDropBehaviour = (event) => {
             event.preventDefault();
+            event.stopPropagation();
         };
 
-        document.addEventListener('dragover', preventDefaultDropBehaviour);
-        document.addEventListener('drop', preventDefaultDropBehaviour);
+        ['dragover', 'drop'].forEach((eventName) => {
+            window.addEventListener(eventName, preventDefaultDropBehaviour);
+            document.addEventListener(eventName, preventDefaultDropBehaviour);
+        });
 
-        dropzone.addEventListener('click', () => {
+        dropzone.addEventListener('click', (event) => {
+            event.preventDefault();
             fileInput.click();
+        });
+
+        dropzone.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                fileInput.click();
+            }
         });
 
         ['dragenter', 'dragover'].forEach((eventName) => {
@@ -1752,6 +1781,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const files = event.dataTransfer?.files;
             if (files && files.length) {
                 const [file] = files;
+                announceSelectedFile(file);
                 try {
                     if (typeof DataTransfer !== 'undefined') {
                         const dt = new DataTransfer();
@@ -1770,7 +1800,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!(target instanceof HTMLInputElement) || !target.files?.length) {
                 return;
             }
-            handleFileSelection(target.files[0]);
+            const [file] = target.files;
+            announceSelectedFile(file);
+            handleFileSelection(file);
         });
     }
 
