@@ -69,6 +69,10 @@ img {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.grid.three {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
 .topbar {
     background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(8px);
@@ -991,7 +995,7 @@ textarea {
 .batch-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 680px;
+    min-width: 760px;
 }
 
 .batch-table th,
@@ -1017,6 +1021,22 @@ textarea {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+}
+
+.batch-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    color: rgba(28, 27, 27, 0.75);
+}
+
+.batch-extra strong {
+    font-weight: 600;
+}
+
+.batch-extra span {
+    color: rgba(28, 27, 27, 0.6);
 }
 
 .batch-entity .muted,
@@ -1072,6 +1092,12 @@ textarea {
     background: #eef3ff;
     border-color: #aabef8;
     color: #314c97;
+}
+
+.alert.warning {
+    background: #fff8e6;
+    border-color: #f2d48a;
+    color: #7a5b14;
 }
 
 .hidden {

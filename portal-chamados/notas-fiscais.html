@@ -66,6 +66,7 @@
                             <thead>
                                 <tr>
                                     <th>Descrição</th>
+                                    <th>Pedido (xPed)</th>
                                     <th>Qtd.</th>
                                     <th>Vlr. unit.</th>
                                 </tr>
@@ -173,6 +174,45 @@
             </fieldset>
 
             <fieldset>
+                <legend>Dados complementares</legend>
+                <div class="grid three">
+                    <label>Número do pedido
+                        <input type="text" name="numero_pedido" maxlength="60" autocomplete="off" placeholder="Informe o número do pedido, se houver.">
+                    </label>
+                    <label>Número de série
+                        <input type="text" name="numero_serie" maxlength="120" autocomplete="off" placeholder="Solicite ao emitente caso não conste na nota.">
+                    </label>
+                    <label>Código KWAN
+                        <input type="text" name="codigo_kwan" maxlength="60" autocomplete="off" placeholder="Ex.: KWAN-1234">
+                    </label>
+                </div>
+            </fieldset>
+
+            <fieldset class="participants">
+                <legend>Participantes da operação</legend>
+                <div class="grid two">
+                    <div class="participant-card">
+                        <h3>Emitente</h3>
+                        <label>Razão social / Nome completo
+                            <input type="text" name="emitente_nome" required maxlength="160" autocomplete="off" placeholder="Quem emitiu a nota?">
+                        </label>
+                        <label>CNPJ / CPF
+                            <input type="text" name="emitente_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
+                        </label>
+                    </div>
+                    <div class="participant-card">
+                        <h3>Destinatário</h3>
+                        <label>Razão social / Nome completo
+                            <input type="text" name="destinatario_nome" required maxlength="160" autocomplete="off" placeholder="Para quem a nota foi emitida?">
+                        </label>
+                        <label>CNPJ / CPF
+                            <input type="text" name="destinatario_cnpj" required maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
                 <legend>Tributos</legend>
                 <div class="grid two tributos-grid">
                     <label>% ICMS
@@ -216,6 +256,7 @@
                 </div>
                 <div class="batch-actions">
                     <span id="batch-counter" class="badge">0 notas</span>
+                    <button type="button" id="btn-export-excel" class="btn outline" disabled>Exportar lote em Excel</button>
                     <button type="button" id="btn-export-xml" class="btn primary" disabled>Exportar lote em XML</button>
                 </div>
             </div>
@@ -226,13 +267,14 @@
                             <th>NF</th>
                             <th>Emitente</th>
                             <th>Destinatário</th>
+                            <th>Pedido / Série / KWAN</th>
                             <th>Valor total</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="batch-list-body">
                         <tr id="batch-empty-state">
-                            <td colspan="5" class="muted">Nenhuma nota foi adicionada ao lote ainda.</td>
+                            <td colspan="6" class="muted">Nenhuma nota foi adicionada ao lote ainda.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -254,14 +296,17 @@
             <label>Descrição do item
                 <input type="text" data-name="descricao" required maxlength="200" autocomplete="off">
             </label>
-            <div class="grid two compact">
-                <label>Quantidade
-                    <input type="number" data-name="quantidade" min="0" step="0.01" placeholder="0" required>
-                </label>
-                <label>Valor unitário (R$)
-                    <input type="number" data-name="valor_unitario" min="0" step="0.01" placeholder="0,00" required>
-                </label>
-            </div>
+            <label>Pedido (xPed)
+                <input type="text" data-name="pedido" maxlength="80" autocomplete="off" placeholder="Número do pedido referenciado">
+            </label>
+        </div>
+        <div class="grid two compact">
+            <label>Quantidade
+                <input type="number" data-name="quantidade" min="0" step="0.01" placeholder="0" required>
+            </label>
+            <label>Valor unitário (R$)
+                <input type="number" data-name="valor_unitario" min="0" step="0.01" placeholder="0,00" required>
+            </label>
         </div>
         <button type="button" class="btn-text remove-item">Remover</button>
     </div>
