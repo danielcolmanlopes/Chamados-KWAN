@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const showMessage = (message, type = 'success') => {
         msgBox.className = `alert ${type}`;
-        msgBox.innerHTML = message;
+        msgBox.textContent = typeof message === 'string' ? message : String(message);
         msgBox.classList.remove('hidden');
         msgBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
