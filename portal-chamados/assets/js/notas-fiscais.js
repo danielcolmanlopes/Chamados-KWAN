@@ -572,10 +572,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const addItem = (itemData = null) => {
         const fragment = template.content.cloneNode(true);
         const newItem = fragment.querySelector('.nf-item');
-        if (itemData && newItem) {
+
+        if (newItem && itemData) {
             const descricaoInput = newItem.querySelector('[data-name="descricao"]');
             const quantidadeInput = newItem.querySelector('[data-name="quantidade"]');
             const valorUnitarioInput = newItem.querySelector('[data-name="valor_unitario"]');
+
             if (descricaoInput) {
                 descricaoInput.value = itemData.descricao ?? '';
             }
@@ -586,8 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 valorUnitarioInput.value = itemData.valor_unitario ?? '';
             }
         }
-    const addItem = () => {
-        const fragment = template.content.cloneNode(true);
+
         container.appendChild(fragment);
         reindexItems();
         updateRemoveButtons();
