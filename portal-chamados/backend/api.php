@@ -8,35 +8,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
-if (!$recaptchaResponse) {
-    echo json_encode(['success' => false, 'message' => 'Confirme o reCAPTCHA para enviar o chamado.']);
-    exit;
-}
-
-$secret = '6LfplforAAAAAEhRchvQUfQXu1mh45EVzjvwSHHF';
-$verifyUrl = 'https://www.google.com/recaptcha/api/siteverify';
-
-$context = stream_context_create([
-    'http' => [
-        'method' => 'POST',
-        'header' => 'Content-type: application/x-www-form-urlencoded',
-        'content' => http_build_query([
-            'secret' => $secret,
-            'response' => $recaptchaResponse,
-            'remoteip' => $_SERVER['REMOTE_ADDR'] ?? null,
-        ]),
-        'timeout' => 10,
-    ]
-]);
-
-$verify = @file_get_contents($verifyUrl, false, $context);
-$result = $verify ? json_decode($verify, true) : null;
-if (!$result || empty($result['success'])) {
-    echo json_encode(['success' => false, 'message' => 'Falha na validação do reCAPTCHA.']);
-    exit;
-}
-
 $requiredFields = [
     'cliente_nome',
     'cliente_email',

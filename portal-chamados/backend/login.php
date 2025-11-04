@@ -1,6 +1,8 @@
 <?php
 session_start();
 require __DIR__ . '/config.php';
+$conn = $mysqli;
+require __DIR__ . '/seed_admin.php';
 
 if (!empty($_SESSION['usuario_id'])) {
     header('Location: admin.php');
@@ -50,6 +52,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="admin-card">
                 <h1>Área Administrativa KWAN</h1>
                 <p class="muted">Informe suas credenciais para acessar os chamados.</p>
+                <div class="alert info">
+                    <strong>Credenciais padrão:</strong> admin@kwansolucoes.com.br / kwan123
+                </div>
                 <?php if ($erro): ?>
                     <div class="alert error"><?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?></div>
                 <?php endif; ?>
