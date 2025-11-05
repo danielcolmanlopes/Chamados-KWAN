@@ -1226,7 +1226,18 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('Não foi possível ler o XML informado. Verifique o arquivo.');
         }
 
-        const infNFe = xml.querySelector('infNFe');
+        let infNFe = xml.querySelector('infNFe');
+        if (!infNFe) {
+            const candidates = [
+                ...Array.from(xml.getElementsByTagName?.('infNFe') ?? []),
+                ...Array.from(xml.getElementsByTagNameNS?.('*', 'infNFe') ?? []),
+                ...Array.from(xml.getElementsByTagName?.('*') ?? []).filter(
+                    (node) => node.localName && node.localName.toLowerCase() === 'infnfe'
+                ),
+            ];
+            infNFe = candidates[0] ?? null;
+        }
+
         if (!infNFe) {
             throw new Error('Estrutura da NF-e não encontrada no XML enviado.');
         }
