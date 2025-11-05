@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
 
+if (!defined('PORTAL_SKIP_DB_CONNECTION')) {
+    define('PORTAL_SKIP_DB_CONNECTION', true);
+}
+
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
