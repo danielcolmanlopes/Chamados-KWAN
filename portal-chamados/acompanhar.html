@@ -1,6 +1,103 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acompanhar Chamado - KWAN</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" type="image/png" href="assets/img/quadrado.png">
+</head>
+<body>
+<header class="topbar">
+    <div class="container flex-between">
+        <div class="logo-area">
+            <a href="index.html"><img src="assets/img/kwan_logotipo_v1.png" alt="KWAN" class="logo-lg"></a>
+            <a href="index.html"><img src="assets/img/kwan_logotipo_pq.png" alt="KWAN" class="logo-sm"></a>
+        </div>
+        <nav class="nav-links">
+            <a href="abrir-chamado.html" class="btn secondary">Abrir Chamado</a>
+            <a href="notas-fiscais.html" class="btn outline">Notas Fiscais</a>
+            <a href="backend/login.php" class="link-admin">Área Administrativa</a>
+        </nav>
+    </div>
+</header>
+
+<main class="acompanhar-page">
+    <div class="container narrow">
+        <h1>Acompanhar chamado</h1>
+        <div class="search-box">
+            <form id="buscar-form">
+                <label for="codigo">Digite o código KWAN do seu chamado</label>
+                <div class="search-input">
+                    <input type="text" id="codigo" name="codigo" placeholder="KWAN-XXXXXXX" required maxlength="13">
+                    <button type="submit" class="btn primary">Buscar</button>
+                </div>
+            </form>
+            <p class="caption">Compartilhe este link para acompanhamento direto: <span id="link-direto">-</span></p>
+        </div>
+
+        <div id="info-chamado" class="hidden">
+            <section class="status-box">
+                <h2>Status atual</h2>
+                <p id="status-atual" class="status-pill"></p>
+                <p><strong>Cliente:</strong> <span id="cliente-nome"></span> • <strong>E-mail:</strong> <span id="cliente-email"></span></p>
+                <p><strong>Produto:</strong> <span id="produto"></span></p>
+                <p><strong>Data de abertura:</strong> <span id="data-abertura"></span></p>
+                <p><strong>Descrição:</strong> <span id="descricao"></span></p>
+                <p class="optional-field" id="info-loja" hidden><strong>Loja:</strong> <span id="loja"></span></p>
+                <p class="optional-field" id="info-endereco-faturamento" hidden><strong>Endereço de faturamento:</strong> <span id="endereco-faturamento"></span></p>
+                <p class="optional-field" id="info-endereco-entrega" hidden><strong>Endereço de entrega:</strong> <span id="endereco-entrega"></span></p>
+                <p class="optional-field" id="info-observacao2" hidden><strong>Observação adicional:</strong> <span id="observacao2"></span></p>
+            </section>
+
+            <section class="timeline">
+                <h2>Linha do tempo</h2>
+                <ul id="lista-eventos"></ul>
+            </section>
+
+            <section class="mensagens">
+                <h2>Mensagens</h2>
+                <div id="lista-mensagens" class="mensagens-lista"></div>
+                <form id="form-mensagem" class="mensagem-form">
+                    <textarea name="mensagem" id="mensagem" rows="3" placeholder="Envie uma mensagem para a equipe KWAN" required maxlength="2000"></textarea>
+                    <button type="submit" class="btn primary">Enviar mensagem</button>
+                </form>
+            </section>
+
+            <section class="anexos-extra">
+                <h2>Enviar anexos adicionais</h2>
+                <form id="form-upload" enctype="multipart/form-data">
+                    <div class="grid two">
+                        <label>Tipo do documento (opcional)
+                            <input type="text" name="tipo" maxlength="120" placeholder="Ex.: NF de remessa">
+                        </label>
+                        <label>Arquivo (jpg, png, pdf, xml, mp4, mp3, wav)
+                            <input type="file" name="arquivo" required>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn outline">Enviar arquivo</button>
+                </form>
+                <div id="upload-status" class="caption"></div>
+            </section>
+        </div>
+
+        <div id="erro" class="alert hidden"></div>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container flex-between">
+        <p>&copy; <span id="ano"></span> KWAN. Todos os direitos reservados.</p>
+        <p class="contact">Suporte: <a href="mailto:suporte@kwansolucoes.com.br">suporte@kwansolucoes.com.br</a></p>
+    </div>
+</footer>
+
+<script src="assets/js/acompanhar.js"></script>
+<script>
+    document.getElementById('ano').textContent = new Date().getFullYear();
+</script>
+
 <meta charset="UTF-8">
 <title>Acompanhar Chamado - KWAN</title>
 <link rel="icon" href="assets/img/quadrado.png">
@@ -42,5 +139,6 @@
 
 <footer>© 2025 KWAN Soluções em Automação — Todos os direitos reservados</footer>
 <script src="assets/js/acompanhar.js"></script>
+
 </body>
 </html>
