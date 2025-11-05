@@ -32,6 +32,52 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTotal = 0;
     const invoiceBatch = [];
     let invoiceCounter = 0;
+    let floatingMessageTimeout = null;
+
+    const ensureFloatingAlert = () => {
+        let element = document.getElementById('floating-alert');
+        if (!element) {
+            element = document.createElement('div');
+            element.id = 'floating-alert';
+            element.className = 'floating-alert hidden';
+            element.setAttribute('role', 'alert');
+            element.setAttribute('aria-live', 'assertive');
+            document.body.appendChild(element);
+        }
+        return element;
+    };
+
+    const hideFloatingAlert = (element) => {
+        if (!element) {
+            return;
+        }
+        element.classList.remove('visible');
+        const handleTransitionEnd = () => {
+            element.classList.add('hidden');
+            element.removeEventListener('transitionend', handleTransitionEnd);
+        };
+        element.addEventListener('transitionend', handleTransitionEnd, { once: true });
+    };
+
+    const showFloatingAlert = (message, type) => {
+        const element = ensureFloatingAlert();
+        element.className = `floating-alert alert ${type}`;
+        element.innerHTML = message;
+        element.classList.remove('hidden');
+
+        // Reinicia a animação
+        element.classList.remove('visible');
+        element.offsetHeight;
+        element.classList.add('visible');
+
+        if (floatingMessageTimeout) {
+            window.clearTimeout(floatingMessageTimeout);
+        }
+
+        floatingMessageTimeout = window.setTimeout(() => {
+            hideFloatingAlert(element);
+        }, 6000);
+    };
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     const supportedImageTypes = ['image/png', 'image/jpeg'];
@@ -41,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         msgBox.textContent = typeof message === 'string' ? message : String(message);
         msgBox.classList.remove('hidden');
         msgBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showFloatingAlert(message, type);
     };
 
     const setStatus = (message, state = 'idle') => {
@@ -62,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setStatus('Nenhum arquivo enviado.', 'idle');
 
-    const resetOcr = () => {
+    const resetOcr = (options = {}) => {
+        const { restoreLabel = true } = options;
         extractedData = null;
         rawText = '';
         if (badgesList) {
@@ -81,6 +129,12 @@ document.addEventListener('DOMContentLoaded', () => {
             rawDetails.classList.add('hidden');
         }
         setApplyButtonsState(false);
+        if (restoreLabel) {
+            const label = dropzone?.querySelector('p strong');
+            if (label) {
+                label.textContent = 'Arraste e solte';
+            }
+        }
     };
 
     const parseDecimal = (value) => {
@@ -252,6 +306,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return `KWAN-${digits}`;
     };
 
+    const normalizeOrderValue = (value) => {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        const text = String(value).trim();
+        if (!text) {
+            return '';
+        }
+        const withoutLabel = text.replace(/pedido\s*[:#-]?\s*/gi, '');
+        const cleaned = withoutLabel.replace(/\s+/g, ' ');
+        return cleaned;
+    };
+
     const calculateItemsTotal = (items) => {
         if (!Array.isArray(items) || !items.length) {
             return null;
@@ -382,6 +449,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return respondWithError('Preencha os campos obrigatórios antes de adicionar ao lote.');
         }
 
+        const numeroPedidoValue = formData.get('numero_pedido');
+        const numeroPedido = normalizeOrderValue(numeroPedidoValue);
+        const numeroSerieValue = formData.get('numero_serie');
+        const numeroSerie = numeroSerieValue ? numeroSerieValue.toString().trim() : '';
+
         const itens = [];
         container.querySelectorAll('.nf-item').forEach((item) => {
             const descricao = item.querySelector('[data-name="descricao"]');
@@ -438,8 +510,8 @@ document.addEventListener('DOMContentLoaded', () => {
             destinatario_nome: getValue('destinatario_nome'),
             destinatario_cnpj: destinatarioDocumento,
             destinatario_cnpj_display: toDisplayDocument(destinatarioDocumento) || getValue('destinatario_cnpj'),
-            numero_pedido: numeroPedido,
-            numero_serie: numeroSerie,
+            numero_pedido: numeroPedido || null,
+            numero_serie: numeroSerie || null,
             codigo_kwan: codigoKwan,
             valor_total: Number.isFinite(total) ? Number(total.toFixed(2)) : 0,
             codigo_kwan: codigoKwan,
@@ -1439,7 +1511,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        resetOcr();
+        resetOcr({ restoreLabel: false });
         setStatus('Processando arquivo, aguarde...', 'loading');
 
         try {
@@ -1653,9 +1725,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const announceSelectedFile = (file) => {
+        if (!file) {
+            return;
+        }
+        const label = dropzone?.querySelector('p strong');
+        if (label) {
+            label.textContent = file.name;
+        }
+        setStatus(`Arquivo selecionado: ${file.name}.`, 'loading');
+    };
+
     if (dropzone && fileInput) {
-        dropzone.addEventListener('click', () => {
+        // Evita que o navegador abra o arquivo quando o usuário solta fora da área válida
+        const preventDefaultDropBehaviour = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        };
+
+        ['dragover', 'drop'].forEach((eventName) => {
+            window.addEventListener(eventName, preventDefaultDropBehaviour);
+            document.addEventListener(eventName, preventDefaultDropBehaviour);
+        });
+
+        dropzone.addEventListener('click', (event) => {
+            event.preventDefault();
             fileInput.click();
+        });
+
+        dropzone.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                fileInput.click();
+            }
         });
 
         ['dragenter', 'dragover'].forEach((eventName) => {
@@ -1678,10 +1780,18 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             const files = event.dataTransfer?.files;
             if (files && files.length) {
-                const dt = new DataTransfer();
-                dt.items.add(files[0]);
-                fileInput.files = dt.files;
-                handleFileSelection(files[0]);
+                const [file] = files;
+                announceSelectedFile(file);
+                try {
+                    if (typeof DataTransfer !== 'undefined') {
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        fileInput.files = dt.files;
+                    }
+                } catch (error) {
+                    console.warn('Falha ao sincronizar o campo de arquivo via DataTransfer.', error);
+                }
+                handleFileSelection(file);
             }
         });
 
@@ -1690,7 +1800,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!(target instanceof HTMLInputElement) || !target.files?.length) {
                 return;
             }
-            handleFileSelection(target.files[0]);
+            const [file] = target.files;
+            announceSelectedFile(file);
+            handleFileSelection(file);
         });
     }
 

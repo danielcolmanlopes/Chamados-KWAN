@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         exit;
     }
 
-    $stmt = $mysqli->prepare("SELECT id, codigo, cliente_nome, cliente_email, cliente_telefone, cliente_cnpj, produto_marca, produto_modelo, produto_serial, produto_data_compra, nf_original, descricao_problema, status, created_at FROM chamados WHERE codigo = ?");
+    $stmt = $mysqli->prepare("SELECT id, codigo, cliente_nome, cliente_email, cliente_telefone, cliente_cnpj, produto_marca, produto_modelo, produto_serial, produto_data_compra, nf_original, descricao_problema, loja, observacao2, endereco_faturamento, endereco_entrega, status, created_at FROM chamados WHERE codigo = ?");
     $stmt->bind_param('s', $codigo);
     $stmt->execute();
     $result = $stmt->get_result();

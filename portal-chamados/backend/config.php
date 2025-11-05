@@ -1,33 +1,40 @@
 <?php
-ini_set('default_charset', 'UTF-8');
+$envDbPass = getenv('PORTAL_DB_PASS');
+$portalConfig = [
+    'db_host' => getenv('PORTAL_DB_HOST') ?: null,
+    'db_user' => getenv('PORTAL_DB_USER') ?: null,
+    'db_pass' => $envDbPass !== false ? $envDbPass : null,
+    'db_name' => getenv('PORTAL_DB_NAME') ?: null,
+    'recaptcha_secret' => getenv('PORTAL_RECAPTCHA_SECRET') ?: null,
+];
+
+$configOverride = __DIR__ . '/config.local.php';
+if (is_readable($configOverride)) {
+    $localConfig = require $configOverride;
+    if (is_array($localConfig)) {
+        foreach ($localConfig as $key => $value) {
+            if (array_key_exists($key, $portalConfig) && $value !== null) {
+                $portalConfig[$key] = $value;
+            }
+        }
+    }
+}
+
+foreach (['db_host', 'db_user', 'db_pass', 'db_name'] as $key) {
+    if (!array_key_exists($key, $portalConfig) || $portalConfig[$key] === null) {
+        die('Configuração do banco de dados ausente. Defina as variáveis de ambiente ou o arquivo config.local.php.');
+    }
+}
+
+$conn = new mysqli(
+    $portalConfig['db_host'],
+    $portalConfig['db_user'],
+    $portalConfig['db_pass'],
+    $portalConfig['db_name']
+);
+
+if ($conn->connect_error) {
+    die('Erro de conexão com o banco de dados: ' . $conn->connect_error);
+}
+
 date_default_timezone_set('America/Sao_Paulo');
-
-$host = "localhost";
-$user = "dclinfo2_portal_chamados";
-$pass = '7k#;Z6wE4[n6';
-$dbname = "dclinfo2_portal_chamados";
-
-$mysqli = new mysqli($host, $user, $pass, $dbname);
-if ($mysqli->connect_errno) {
-    http_response_code(500);
-    die('Erro ao conectar ao banco de dados: ' . $mysqli->connect_error);
-}
-
-$mysqli->set_charset('utf8mb4');
-
-function sanitize_text($value)
-{
-    return trim(filter_var($value ?? '', FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES));
-}
-
-function generate_codigo()
-{
-    return 'KWAN-' . strtoupper(bin2hex(random_bytes(4)));
-}
-
-function allowed_extension($filename)
-{
-    $allowed = ['jpg', 'jpeg', 'png', 'pdf', 'xml', 'mp4', 'mp3', 'wav'];
-    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-    return in_array($ext, $allowed, true) ? $ext : false;
-}
