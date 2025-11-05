@@ -275,16 +275,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (value === null || value === undefined) {
             return '';
         }
-        const trimmed = String(value).trim();
-        if (!trimmed) {
+        const rawText = String(value).trim();
+        if (!rawText) {
             return '';
         }
-        const normalized = trimmed
+
+        const withoutLabel = rawText.replace(/pedido\s*[:#-]?\s*/gi, '');
+
+        const withoutDiacritics = withoutLabel
             .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toUpperCase();
-        const sanitized = normalized.replace(/[^A-Z0-9/_-]+/g, '');
-        return sanitized;
+            .replace(/[\u0300-\u036f]/g, '');
+
+        const uppercased = withoutDiacritics.toUpperCase();
+
+        const cleaned = uppercased.replace(/[^A-Z0-9/_-]+/g, ' ').trim();
+
+        return cleaned.replace(/\s+/g, ' ');
     };
 
     const normalizeKwanCodeValue = (value) => {
@@ -304,19 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return '';
         }
         return `KWAN-${digits}`;
-    };
-
-    const normalizeOrderValue = (value) => {
-        if (value === null || value === undefined) {
-            return '';
-        }
-        const text = String(value).trim();
-        if (!text) {
-            return '';
-        }
-        const withoutLabel = text.replace(/pedido\s*[:#-]?\s*/gi, '');
-        const cleaned = withoutLabel.replace(/\s+/g, ' ');
-        return cleaned;
     };
 
     const calculateItemsTotal = (items) => {
