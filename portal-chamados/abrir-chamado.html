@@ -89,12 +89,17 @@
                 </label>
             </fieldset>
 
-            <div class="form-actions">
-                <button type="submit" class="btn primary">Enviar chamado</button>
-                <a href="index.html" class="btn outline">Cancelar</a>
-            </div>
-        </form>
-    </div>
+    <h3>Descrição do Problema</h3>
+    <textarea name="descricao_problema" placeholder="Descreva o problema..." required></textarea>
+    <label>Fotos / Vídeos / Áudio (opcional)</label>
+    <input type="file" name="midias[]" accept="image/*,video/*,audio/*" multiple>
+
+    <div id="recaptcha" class="g-recaptcha"></div>
+
+    <button type="submit">Enviar Chamado</button>
+  </form>
+
+  <div id="msg"></div>
 </main>
 
 <footer class="footer">
